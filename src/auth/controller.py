@@ -1,6 +1,6 @@
 from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm
-from auth.model import RegisterUserRequest, Token, LoginUserRequest, TokenData
+from auth.schemas import RegisterUserRequest, Token, LoginUserRequest, TokenData
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from starlette import status
 from database.core import get_db
@@ -10,7 +10,7 @@ from .service import get_current_user, login_for_access_token, create_user_in_db
 
 router = APIRouter(
     prefix='/auth',
-    tags=['auth']
+    tags=['Authentication']
 )
 
 
@@ -52,11 +52,11 @@ async def register_user(
             db=db
         )
 
-        return None
+        return {"detail": "User registered successfully"}
 
     except Exception as e:
         raise HTTPException(status_code=401, detail=str('Registration failed: ' + str(e)))
-    
+
 
 @router.post("/logout", status_code=200, dependencies=[Depends(SafeRateLimiter(times=10, seconds=60))],)
 async def logout_user(
@@ -68,6 +68,7 @@ async def logout_user(
         return {"detail": "Logged out successfully"}
     except Exception as e:
         raise HTTPException(status_code=401, detail="Logout failed: " + str(e))
+
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(

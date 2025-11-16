@@ -28,8 +28,10 @@ if config.config_file_name is not None:
 
 # Import your models here
 from database.core import Base
-from entities.user import User
-from entities.refresh_session import RefreshSession
+from entities.user import UserModel
+from entities.refresh_session import RefreshSessionModel
+from entities.family import FamilyModel, FamilyMovementModel
+from entities.resident import ResidentModel, OccupationModel
 
 # add your model's MetaData object here
 # for 'autogenerate' support

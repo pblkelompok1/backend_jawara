@@ -2,16 +2,16 @@ from datetime import timedelta, datetime, timezone
 import secrets
 from typing import Annotated
 from uuid import UUID
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from passlib.context import CryptContext
 import jwt
 from jwt import PyJWTError, decode, ExpiredSignatureError
 from sqlalchemy.orm import Session
-from entities.user import User
-from entities.refresh_session import RefreshSession
+from entities.user import UserModel
+from entities.refresh_session import RefreshSessionModel
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from exceptions import AppException
-from auth.model import Token, TokenData, RegisterUserRequest
+from auth.schemas import Token, TokenData, RegisterUserRequest
 import os
 import hashlib
 
@@ -34,11 +34,18 @@ def hash_refresh_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def authenticate_user(email: str, password: str, db: Session) -> User | bool:
-    user = db.query(User).filter(User.email == email).first()
+def authenticate_user(email: str, password: str, db: Session) -> UserModel | bool:
+    user = db.query(UserModel).filter(UserModel.email == email).first()
     if not user or not verify_password_hash(password, user.password_hash):
         raise AppException("Invalid email or password", 401)
     return user
+
+
+def require_role(*allowed_roles):
+    def role_checker(current_user: TokenData = Depends(get_current_user)):
+        if current_user.role not in allowed_roles:
+            raise AppException("Forbidden: Insufficient permissions", 403)
+    return Depends(role_checker)
 
 
 def create_access_token(user_id: UUID, role: str, expires_delta: timedelta) -> str:
@@ -73,7 +80,7 @@ def create_refresh_token(user_id: UUID, db: Session):
     token_hash = hash_refresh_token(token_plain)
     expires_at = datetime.now() + timedelta(days=30)
 
-    refresh_session = RefreshSession(
+    refresh_session = RefreshSessionModel(
         user_id=user_id,
         refresh_token_hash=token_hash,
         expires_at=expires_at,
@@ -88,7 +95,7 @@ def create_refresh_token(user_id: UUID, db: Session):
 
 def revoke_refresh_token(refresh_token: str, db: Session) -> None: 
     token_hash = hash_refresh_token(refresh_token)
-    session = db.query(RefreshSession).filter_by(refresh_token_hash=token_hash, revoked=False).first()
+    session = db.query(RefreshSessionModel).filter_by(refresh_token_hash=token_hash, revoked=False).first()
     if not session:
         raise AppException("Refresh token not found or already revoked", 401)
     
@@ -99,7 +106,7 @@ def revoke_refresh_token(refresh_token: str, db: Session) -> None:
 
 def refresh_access_token(refresh_token: str, db: Session) -> Token:
     token_hash = hash_refresh_token(refresh_token)
-    session = db.query(RefreshSession).filter_by(refresh_token_hash=token_hash, revoked=False).first()
+    session = db.query(RefreshSessionModel).filter_by(refresh_token_hash=token_hash, revoked=False).first()
     if not session:
         raise AppException("Invalid refresh token", 401)
     
@@ -107,7 +114,7 @@ def refresh_access_token(refresh_token: str, db: Session) -> Token:
         raise AppException("Refresh token expired", 401)
 
 
-    user = db.query(User).filter(User.user_id == session.user_id).first()
+    user = db.query(UserModel).filter(UserModel.user_id == session.user_id).first()
     if not user:
         raise AppException("User not found", 401)
 
@@ -128,13 +135,13 @@ def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depen
 
 
 
-def create_user_in_db(email: str, password: str, role: str, db: Session) -> RegisterUserRequest:
-    existing_user = db.query(User).filter(User.email == email).first()
+def create_user_in_db(email: str, password: str, role: str, db: Session) -> str:
+    existing_user = db.query(UserModel).filter(UserModel.email == email).first()
     if existing_user:
         raise AppException("Email already registered", 400)
     
     hashed_password = get_password_hash(password)
-    new_user = User(
+    new_user = UserModel(
         email=email,
         password_hash=hashed_password,
         role=role
@@ -142,5 +149,5 @@ def create_user_in_db(email: str, password: str, role: str, db: Session) -> Regi
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
 
+    return "User created successfully"

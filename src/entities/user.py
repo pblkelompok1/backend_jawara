@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+
 import uuid
 import enum
 from database.core import Base
@@ -12,13 +14,15 @@ class UserRole(str, enum.Enum):
     treasurer = "treasurer"
     citizen = "citizen"
 
+
 class UserStatus(str, enum.Enum):
     active = "active"
     inactive = "inactive"
     suspended = "suspended"
     pending = "pending"
 
-class User(Base):
+
+class UserModel(Base):
     __tablename__ = 'm_user'
 
     user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -29,3 +33,4 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(user_id={self.user_id}, email={self.email}, password_hash={self.password_hash}, role={self.role}, status={self.status})>"
+    
