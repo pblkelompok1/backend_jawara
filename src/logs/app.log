@@ -1,0 +1,6 @@
+2025-11-15 11:10:18 | INFO | main:index:11 | Index accessed
+2025-11-15 11:10:18 | WARNING | main:index:13 | This is a warning on index access
+2025-11-15 11:10:18 | ERROR | main:index:14 | This is an error on index access
+2025-11-15 11:12:16 | INFO | main:index:11 | Index accessed
+2025-11-15 11:12:16 | WARNING | main:index:13 | This is a warning on index access
+2025-11-15 11:12:16 | ERROR | main:index:14 | This is an error on index access
