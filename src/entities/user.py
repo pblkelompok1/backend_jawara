@@ -20,6 +20,7 @@ class UserStatus(str, enum.Enum):
     inactive = "inactive"
     suspended = "suspended"
     pending = "pending"
+    declined = "declined"
 
 
 class UserModel(Base):
@@ -31,6 +32,10 @@ class UserModel(Base):
     role = Column(String, nullable=False, default=UserRole.citizen.value)
     status = Column(String, nullable=False, default=UserStatus.pending.value)
 
+    residents_rel = relationship('ResidentModel', back_populates='user_rel')
+
+
     def __repr__(self):
         return f"<User(user_id={self.user_id}, email={self.email}, password_hash={self.password_hash}, role={self.role}, status={self.status})>"
-    
+
+

@@ -69,7 +69,7 @@ def upgrade() -> None:
         sa.Column('occupation', sa.String(), nullable=False),
         sa.Column('profile_img_path', sa.String(), nullable=False, server_default='"default_profile.png"'),
         sa.Column('ktp_path', sa.String(), nullable=False, server_default='"default_profile.png"'),
-        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column('occupation_id', sa.Integer(), nullable=False),
         sa.Column('family_id', postgresql.UUID(as_uuid=True), nullable=False),
 

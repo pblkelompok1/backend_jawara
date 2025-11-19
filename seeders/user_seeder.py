@@ -9,8 +9,8 @@ from pathlib import Path
 # Add src directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-from database.core import SessionLocal, engine, Base
-from entities.user import User, UserRole
+from src.database.core import SessionLocal, engine, Base
+from src.entities.user import UserModel, UserRole
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -69,12 +69,12 @@ def seed_users():
         ]
         
         # Check jika user sudah ada
-        existing_emails = {user.email for user in db.query(User).all()}
+        existing_emails = {user.email for user in db.query(UserModel).all()}
         
         users_created = 0
         for user_data in users_data:
             if user_data["email"] not in existing_emails:
-                user = User(
+                user = UserModel(
                     email=user_data["email"],
                     password_hash=hash_password(user_data["password"]),
                     role=user_data["role"]

@@ -2,7 +2,10 @@ from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from database.core import Base
 from sqlalchemy.dialects.postgresql import UUID
+from entities.family import FamilyModel
+from entities.user import UserModel
 import enum
+import uuid
 
 class BloodType(str, enum.Enum):
     a = "a"
@@ -44,7 +47,7 @@ class OccupationModel(Base):
 class ResidentModel(Base):
     __tablename__ = 'm_resident'
 
-    resident_id = Column(UUID(as_uuid=True), primary_key=True)
+    resident_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     nik = Column(String, unique=True, nullable=False)
     phone = Column(String, nullable=False)
     place_of_birth = Column(String, nullable=False)
@@ -58,13 +61,14 @@ class ResidentModel(Base):
     occupation = Column(String, nullable=False)
     profile_img_path = Column(String, nullable=False, default="default_profile.png")
     ktp_path = Column(String, nullable=False, default="default_profile.png")
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey('m_user.user_id'), nullable=False)
-    occupation_id = Column(Integer, ForeignKey('m_occupation.occupation_id'), nullable=False)
     family_id = Column(UUID(as_uuid=True), ForeignKey('m_family.family_id'), nullable=False)
 
-    family = relationship('FamilyModel', back_populates='residents_rel')
-    occupation_rel = relationship('OccupationModel', back_populates='residents_rel')
+    user_id = Column(UUID(as_uuid=True), ForeignKey('m_user.user_id'), nullable=True)
+    occupation_id = Column(Integer, ForeignKey('m_occupation.occupation_id'), nullable=False)
+
+    user_rel = relationship('UserModel', back_populates='residents_rel')
+    family_rel = relationship('FamilyModel', back_populates='residents_rel')
+    occupation_rel = relationship('OccupationModel', back_populates='residents')
 
     def __repr__(self):
         return f"<ResidentModel(resident_id={self.resident_id}, nik={self.nik}, phone={self.phone}, family_id={self.family_id})>"
