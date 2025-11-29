@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 
 import uuid
 import enum
-from database.core import Base
+from src.database.core import Base
 
 class UserRole(str, enum.Enum):
     admin = "admin"

@@ -5,12 +5,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import NoResultFound
 from fastapi import Depends
 from passlib.context import CryptContext
-from exceptions import AppException
-from entities.resident import ResidentModel
-from entities.user import UserModel
+from src.exceptions import AppException
+from src.entities.resident import ResidentModel
+from src.entities.user import UserModel
 from sqlalchemy.orm import joinedload
 from sqlalchemy import and_
-from resident.schemas import ResidentsFilter
+from src.resident.schemas import ResidentsFilter
 
 import os
 import hashlib

@@ -1,9 +1,9 @@
 # main.py
 from fastapi import FastAPI
 import asyncio
-from rate_limit import init_rate_limit
-from exceptions import AppException, app_exception_handler
-from api import register_routes
+from src.rate_limit import init_rate_limit
+from src.exceptions import AppException, app_exception_handler
+from src.api import register_routes
 
 app = FastAPI()
 

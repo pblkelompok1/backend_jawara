@@ -2,12 +2,12 @@ from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from starlette import status
-from database.core import get_db
-from rate_limit import SafeRateLimiter
+from src.database.core import get_db
+from src.rate_limit import SafeRateLimiter
 from sqlalchemy.orm import Session
-from resident.schemas import ResidentList, ResidentsFilter
-from resident.service import get_resident_summary, get_residents, change_user_status
-from entities.resident import ResidentModel
+from src.resident.schemas import ResidentList, ResidentsFilter
+from src.resident.service import get_resident_summary, get_residents, change_user_status
+from src.entities.resident import ResidentModel
 
 
 router = APIRouter(

@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from database.core import Base
+from src.database.core import Base
 from sqlalchemy.dialects.postgresql import UUID
-from entities.family import FamilyModel
-from entities.user import UserModel
+from src.entities.family import FamilyModel
+from src.entities.user import UserModel
 import enum
 import uuid
 

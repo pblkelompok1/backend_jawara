@@ -1,10 +1,10 @@
 from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm
-from auth.schemas import RegisterUserRequest, Token, LoginUserRequest, TokenData
+from src.auth.schemas import RegisterUserRequest, Token, LoginUserRequest, TokenData
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from starlette import status
-from database.core import get_db
-from rate_limit import SafeRateLimiter
+from src.database.core import get_db
+from src.rate_limit import SafeRateLimiter
 from sqlalchemy.orm import Session
 from .service import get_current_user, login_for_access_token, create_user_in_db, refresh_access_token, revoke_refresh_token
 

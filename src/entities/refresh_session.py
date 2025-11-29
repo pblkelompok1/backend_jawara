@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, String, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-from database.core import Base
+from src.database.core import Base
 from datetime import datetime, timedelta, timezone
 
 class RefreshSessionModel(Base):

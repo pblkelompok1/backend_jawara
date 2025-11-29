@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from database.core import Base
+from src.database.core import Base
 from sqlalchemy.dialects.postgresql import UUID
-from entities.user import UserModel
+from src.entities.user import UserModel
 
 class FamilyModel(Base):
     __tablename__ = 'm_family'
