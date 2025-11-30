@@ -1,12 +1,15 @@
 from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm
 from src.auth.schemas import RegisterUserRequest, Token, LoginUserRequest, TokenData
-from fastapi import APIRouter, Depends, HTTPException, Request, Header
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Header
 from starlette import status
 from src.database.core import get_db
 from src.rate_limit import SafeRateLimiter
 from sqlalchemy.orm import Session
-from .service import get_current_user, login_for_access_token, create_user_in_db, refresh_access_token, revoke_refresh_token
+from .service import check_user_resident_data, get_current_user, is_user_status_pending, login_for_access_token, create_user_in_db, refresh_access_token, revoke_refresh_token
+from fastapi import File, UploadFile, Form
+from src.auth.schemas import ResidentSubmissionRequest
+from .service import create_resident_submission_service, decode_token
 
 router = APIRouter(
     prefix='/auth',
@@ -88,3 +91,85 @@ async def get_my_profile(current_user: TokenData = Depends(get_current_user)):
         "user_id": current_user.user_id,
         "role": current_user.role
     }
+    
+
+@router.get("/check_resident_data")
+async def check_is_resident_data_exists(
+    current_user: TokenData = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        has_resident_data = check_user_resident_data(user_id=current_user.user_id, db=db)
+        return {"has_resident_data": has_resident_data}
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Check failed: " + str(e))
+    
+
+@router.get("/check_user_status")
+async def check_is_user_pending(
+    current_user: TokenData = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        is_pending = is_user_status_pending(user_id=current_user.user_id, db=db)
+        return {"is_pending": is_pending}
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Check failed: " + str(e))
+
+@router.post("/resident/submissions")
+async def create_resident_submission(
+    request: Request,
+    name: str = Form(...),
+    nik: str = Form(...),
+    phone: str = Form(None),
+    place_of_birth: str = Form(...),
+    date_of_birth: str = Form(...),
+    gender: str = Form(...),
+    family_role: str = Form(...),
+    religion: str = Form(None),
+    domicile_status: str = Form(None),
+    status: str = "pending",
+    blood_type: str = Form(None),
+    family_id: str = Form(...),
+    occupation_id: int = Form(...),
+    ktp_file: UploadFile = File(...),
+    kk_file: UploadFile = File(...),
+    birth_certificate_file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    try:
+        # Extract token from Authorization header
+        auth_header = request.headers.get("authorization")
+        if not auth_header or not auth_header.lower().startswith("bearer "):
+            raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+        token = auth_header.split(" ", 1)[1]
+        token_data = decode_token(token)
+        user_id = token_data.user_id
+
+        resident_data = ResidentSubmissionRequest(
+            name=name,
+            nik=nik,
+            phone=phone,
+            place_of_birth=place_of_birth,
+            date_of_birth=date_of_birth,
+            gender=gender,
+            family_role=family_role,
+            religion=religion,
+            domicile_status=domicile_status,
+            status=status,
+            blood_type=blood_type,
+            family_id=family_id,
+            occupation_id=occupation_id
+        )
+        result = await create_resident_submission_service(
+            resident_data,
+            ktp_file,
+            kk_file,
+            birth_certificate_file,
+            db,
+            user_id=user_id
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Submission failed: {str(e)}")
+    

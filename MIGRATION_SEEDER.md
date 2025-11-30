@@ -88,18 +88,24 @@ python seeders/refresh_session_seeder.py
 
 ## Data Seeder Default
 
-### Users
+
+### Users & Residents
 Seeder akan membuat user dengan email dan role berikut:
 
-| Email | Password | Role |
-|-------|----------|------|
-| admin@jawara.com | password123 | admin |
-| rw@jawara.com | password123 | rw |
-| rt@jawara.com | password123 | rt |
-| secretary@jawara.com | password123 | secretary |
-| treasurer@jawara.com | password123 | treasurer |
-| citizen@jawara.com | password123 | citizen |
-| citizen2@jawara.com | password123 | citizen |
+| Email | Password | Role | Linked Resident |
+|-------|----------|------|-----------------|
+| admin@jawara.com | password123 | admin | (nullable) |
+| rw@jawara.com | password123 | rw | (nullable) |
+| rt@jawara.com | password123 | rt | (nullable) |
+| secretary@jawara.com | password123 | secretary | (nullable) |
+| treasurer@jawara.com | password123 | treasurer | (nullable) |
+| citizen@jawara.com | password123 | citizen | (nullable) |
+| citizen2@jawara.com | password123 | citizen | (nullable) |
+
+User dapat memiliki relasi ke resident melalui kolom `resident_id` (nullable). Seeder dapat diupdate untuk mengisi relasi ini jika data resident tersedia.
+
+### Residents
+Seeder akan membuat data resident dummy untuk testing. Relasi ke user dapat diisi dengan mengupdate kolom `resident_id` di tabel user.
 
 ### Refresh Sessions
 Seeder akan membuat refresh session dummy untuk setiap user dengan:

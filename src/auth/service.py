@@ -1,3 +1,7 @@
+import shutil
+from fastapi import UploadFile
+from src.auth.schemas import ResidentSubmissionRequest
+import uuid
 from datetime import timedelta, datetime, timezone
 import secrets
 from typing import Annotated
@@ -8,6 +12,7 @@ import jwt
 from jwt import PyJWTError, decode, ExpiredSignatureError
 from sqlalchemy.orm import Session
 from src.entities.user import UserModel
+from src.entities.resident import ResidentModel
 from src.entities.refresh_session import RefreshSessionModel
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from src.exceptions import AppException
@@ -103,7 +108,6 @@ def revoke_refresh_token(refresh_token: str, db: Session) -> None:
     db.commit()
 
 
-
 def refresh_access_token(refresh_token: str, db: Session) -> Token:
     token_hash = hash_refresh_token(refresh_token)
     session = db.query(RefreshSessionModel).filter_by(refresh_token_hash=token_hash, revoked=False).first()
@@ -151,3 +155,78 @@ def create_user_in_db(email: str, password: str, role: str, db: Session) -> str:
     db.refresh(new_user)
 
     return "User created successfully"
+
+
+def check_user_resident_data(user_id: UUID, db: Session) -> bool:
+    user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+    if not user or not user.resident_id:
+        return False
+    return True
+
+def is_user_status_pending(user_id: UUID, db: Session) -> bool:
+    user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+    if not user or user.status != "pending":
+        return False
+    return True
+
+
+async def create_resident_submission_service(
+    resident_data: ResidentSubmissionRequest,
+    ktp_file: UploadFile,
+    kk_file: UploadFile,
+    birth_certificate_file: UploadFile,
+    db: Session,
+    user_id: str = None
+):
+    storage_paths = {
+        "ktp": f"storage/ktp/{uuid.uuid4()}_{ktp_file.filename}",
+        "kk": f"storage/kk/{uuid.uuid4()}_{kk_file.filename}",
+        "birth_certificate": f"storage/birth_certificate/{uuid.uuid4()}_{birth_certificate_file.filename}"
+    }
+    try:
+        # Save files
+        for key, file in zip(["ktp", "kk", "birth_certificate"], [ktp_file, kk_file, birth_certificate_file]):
+            with open(storage_paths[key], "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+
+        # Create ResidentModel
+        new_resident = ResidentModel(
+            name=resident_data.name,
+            nik=resident_data.nik,
+            phone=resident_data.phone,
+            place_of_birth=resident_data.place_of_birth,
+            date_of_birth=resident_data.date_of_birth,
+            gender=resident_data.gender,
+            family_role=resident_data.family_role,
+            religion=resident_data.religion,
+            domicile_status=resident_data.domicile_status or "active",
+            status=resident_data.status or "pending",
+            blood_type=resident_data.blood_type or "o",
+            family_id=resident_data.family_id,
+            occupation_id=resident_data.occupation_id,
+            profile_img_path="storage/default/default_profile.png",
+            ktp_path=storage_paths["ktp"],
+            kk_path=storage_paths["kk"],
+            birth_certificate_path=storage_paths["birth_certificate"]
+        )
+        db.add(new_resident)
+        db.commit()
+        db.refresh(new_resident)
+
+        # If user_id is provided, update UserModel to set resident_id
+        if user_id:
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if user:
+                user.resident_id = new_resident.resident_id
+                db.commit()
+
+        return {"detail": "Resident created successfully", "resident_id": str(new_resident.resident_id)}
+    except Exception as e:
+        db.rollback()
+        # Optionally remove files if error occurs
+        for path in storage_paths.values():
+            try:
+                os.remove(path)
+            except Exception:
+                pass
+        raise Exception(f"Failed to create resident: {str(e)}")

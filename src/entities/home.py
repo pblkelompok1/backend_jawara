@@ -28,7 +28,7 @@ class HomeHistoryModel(Base):
     moved_in_date = Column(Date, nullable=False)
     moved_out_date = Column(Date, nullable=True)
 
-    home = relationship('HomeModel', back_populates='home_history_rel')
+    home_rel = relationship('HomeModel', back_populates='histories')
 
     def __repr__(self):
         return f"<HomeHistoryModel(home_id={self.home_id}, family_id={self.family_id}, moved_in_date={self.moved_in_date}, moved_out_date={self.moved_out_date})>"

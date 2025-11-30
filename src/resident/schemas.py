@@ -29,10 +29,16 @@ class ResidentsFilter(BaseModel):
     offset: int = 0
 
 
+
 class PendingUserSignUp(BaseModel):
     user_id: str
     email: EmailStr
+    role: str
     status: str
+    resident_id: Optional[str] = None
 
     class Config:
         orm_mode = True
+
+class PendingUserSignUpList(BaseModel):
+    pending_users: list[PendingUserSignUp]

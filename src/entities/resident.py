@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from src.database.core import Base
 from sqlalchemy.dialects.postgresql import UUID
 from src.entities.family import FamilyModel
-from src.entities.user import UserModel
 import enum
 import uuid
 
@@ -19,6 +18,10 @@ class DomicileStatus(str, enum.Enum):
     deceased = "deceased"      
     temporary_absent = "temporary_absent"  
     unknown = "unknown"        
+
+class DataStatus(str, enum.Enum):
+    approved = "approved"          
+    pending = "pending"
 
 class FamilyRole(str, enum.Enum):
     head = "head"             
@@ -48,27 +51,33 @@ class ResidentModel(Base):
     __tablename__ = 'm_resident'
 
     resident_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String, nullable=False)
     nik = Column(String, unique=True, nullable=False)
-    phone = Column(String, nullable=False)
+    phone = Column(String, nullable=True)
     place_of_birth = Column(String, nullable=False)
     date_of_birth = Column(Date, nullable=False)
     gender = Column(String, nullable=False)
     is_deceased = Column(Boolean, nullable=False, default=False)
     family_role = Column(String, nullable=False, default=FamilyRole.other.value)
-    religion = Column(String, nullable=False)
+    religion = Column(String, nullable=True)
     domicile_status = Column(String, nullable=False, default=DomicileStatus.active.value)
-    blood_type = Column(String, nullable=False, default=BloodType.o.value)
-    occupation = Column(String, nullable=False)
-    profile_img_path = Column(String, nullable=False, default="default_profile.png")
-    ktp_path = Column(String, nullable=False, default="default_profile.png")
+    status = Column(String, nullable=False, default=DataStatus.approved.value)
+    blood_type = Column(String, nullable=True, default=BloodType.o.value)
+    profile_img_path = Column(String, nullable=True, default="storage/default/default_profile.png")
+    ktp_path = Column(String, nullable=False)
+    kk_path = Column(String, nullable=False)
+    birth_certificate_path = Column(String, nullable=False)
     family_id = Column(UUID(as_uuid=True), ForeignKey('m_family.family_id'), nullable=False)
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('m_user.user_id'), nullable=True)
     occupation_id = Column(Integer, ForeignKey('m_occupation.occupation_id'), nullable=False)
 
-    user_rel = relationship('UserModel', back_populates='residents_rel')
+    user_rel = relationship('UserModel', back_populates='resident_rel', uselist=False)
     family_rel = relationship('FamilyModel', back_populates='residents_rel')
     occupation_rel = relationship('OccupationModel', back_populates='residents')
 
     def __repr__(self):
-        return f"<ResidentModel(resident_id={self.resident_id}, nik={self.nik}, phone={self.phone}, family_id={self.family_id})>"
+        return (
+            f"<Resident(resident_id={self.resident_id}, "
+            f"name='{self.name}', nik='{self.nik}', phone='{self.phone}', "
+            f"family_id={self.family_id}, occupation_id={self.occupation_id})>"
+        )

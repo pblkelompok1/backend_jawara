@@ -11,6 +11,7 @@ from src.entities.user import UserModel
 from sqlalchemy.orm import joinedload
 from sqlalchemy import and_
 from src.resident.schemas import ResidentsFilter
+from src.entities.family import FamilyModel
 
 import os
 import hashlib
@@ -88,8 +89,9 @@ def change_user_status(db: Session, user_id: str, status: str) -> UserModel:
     except NoResultFound:
         raise ValueError(f"User dengan id {user_id} tidak ditemukan.")
 
-    if user.status != "pending":
-        raise ValueError(f"User dengan id {user_id} tidak berstatus pending.")
+    actual_status = str(user.status).strip().lower()
+    if actual_status != "pending":
+        raise ValueError(f"User dengan id {user_id} tidak berstatus pending. (actual: '{user.status}')")
 
     user.status = status
     db.commit()
@@ -97,6 +99,55 @@ def change_user_status(db: Session, user_id: str, status: str) -> UserModel:
     return user
 
 
-def get_pending_user_signups(db: Session):
-    pending_users = db.query(ResidentModel.UserModel).filter(ResidentModel.UserModel.status == "pending").all()
-    return pending_users
+def get_pending_user(db: Session):
+    pending_users = db.query(UserModel).filter(UserModel.status == "pending").all()
+    return {"pending_users": [
+        {
+            "user_id": str(u.user_id),
+            "email": u.email,
+            "role": u.role,
+            "status": u.status,
+            "resident_id": str(u.resident_id) if u.resident_id else None
+        }
+        for u in pending_users
+    ]}
+
+#######################
+###  Family Service ###
+#######################
+
+def get_family_id_name_list(db: Session, name: str | None = None):
+    query = db.query(FamilyModel.family_id, FamilyModel.family_name)
+    if name:
+        name_filter = name.strip()
+        if name_filter:
+            query = query.filter(FamilyModel.family_name.ilike(f"%{name_filter}%"))
+    families = query.all()
+    return [
+        {
+            "family_id": str(f.family_id),
+            "family_name": f.family_name
+        }
+        for f in families
+    ]
+    
+    
+##########################
+###  Occupation Service ###
+##########################
+
+def get_occupation_id_name_list(db: Session, name: str | None = None):
+    from src.entities.resident import OccupationModel
+    query = db.query(OccupationModel.occupation_id, OccupationModel.occupation_name)
+    if name:
+        name_filter = name.strip()
+        if name_filter:
+            query = query.filter(OccupationModel.occupation_name.ilike(f"%{name_filter}%"))
+    occupations = query.all()
+    return [
+        {
+            "occupation_id": str(o.occupation_id),
+            "occupation_name": o.occupation_name
+        }
+        for o in occupations
+    ]

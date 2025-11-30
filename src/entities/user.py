@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -32,7 +32,8 @@ class UserModel(Base):
     role = Column(String, nullable=False, default=UserRole.citizen.value)
     status = Column(String, nullable=False, default=UserStatus.pending.value)
 
-    residents_rel = relationship('ResidentModel', back_populates='user_rel')
+    resident_id = Column(UUID(as_uuid=True), ForeignKey('m_resident.resident_id'), nullable=True)
+    resident_rel = relationship('ResidentModel', back_populates='user_rel', uselist=False)
 
 
     def __repr__(self):

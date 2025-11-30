@@ -2,18 +2,13 @@
 Seeder untuk tabel RefreshSession
 Menambahkan refresh session dummy untuk testing
 """
-import sys
-import os
-from pathlib import Path
+
 from datetime import datetime, timedelta
 import uuid
 
-# Add src directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
-
 from src.database.core import SessionLocal
-from src.entities.user import User
-from src.entities.refresh_session import RefreshSession
+from src.entities.user import UserModel
+from src.entities.refresh_session import RefreshSessionModel
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -31,7 +26,7 @@ def seed_refresh_sessions():
     
     try:
         # Ambil semua user
-        users = db.query(User).all()
+        users = db.query(UserModel).all()
         
         if not users:
             print("No users found. Please run user_seeder first.")
@@ -41,19 +36,19 @@ def seed_refresh_sessions():
         
         for user in users:
             # Check jika user sudah punya refresh session
-            existing_session = db.query(RefreshSession).filter(
-                RefreshSession.user_id == user.user_id
+            existing_session = db.query(RefreshSessionModel).filter(
+                RefreshSessionModel.user_id == user.user_id
             ).first()
             
             if not existing_session:
                 # Buat dummy refresh token
                 dummy_token = f"refresh_token_{user.email}_{uuid.uuid4()}"
                 
-                session = RefreshSession(
+                session = RefreshSessionModel(
                     user_id=user.user_id,
                     refresh_token_hash=hash_token(dummy_token),
                     expires_at=datetime.now() + timedelta(days=30),
-                    created_at=datetime.now().isoformat(),
+                    created_at=datetime.now(),
                     revoked=False
                 )
                 db.add(session)

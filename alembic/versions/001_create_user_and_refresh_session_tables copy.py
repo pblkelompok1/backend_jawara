@@ -27,6 +27,7 @@ def upgrade() -> None:
         sa.Column('password_hash', sa.String(255), nullable=False),  # bcrypt hash is 60 chars, but 255 for safety
         sa.Column('role', sa.String(), nullable=False, server_default='citizen'),
         sa.Column('status', sa.String(), nullable=False, server_default='pending'),
+        sa.Column('resident_id', postgresql.UUID(as_uuid=True), nullable=True),
     )
 
 

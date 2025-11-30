@@ -2,12 +2,7 @@
 Seeder untuk tabel User
 Menambahkan user default untuk setiap role
 """
-import sys
-import os
-from pathlib import Path
 
-# Add src directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 from src.database.core import SessionLocal, engine, Base
 from src.entities.user import UserModel, UserRole
@@ -77,7 +72,8 @@ def seed_users():
                 user = UserModel(
                     email=user_data["email"],
                     password_hash=hash_password(user_data["password"]),
-                    role=user_data["role"]
+                    role=user_data["role"],
+                    resident_id=user_data.get("resident_id")
                 )
                 db.add(user)
                 users_created += 1

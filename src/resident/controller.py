@@ -6,13 +6,21 @@ from src.database.core import get_db
 from src.rate_limit import SafeRateLimiter
 from sqlalchemy.orm import Session
 from src.resident.schemas import ResidentList, ResidentsFilter
-from src.resident.service import get_resident_summary, get_residents, change_user_status
+from src.resident.service import (
+    get_resident_summary, get_residents, change_user_status, get_pending_user,
+    get_family_id_name_list, get_occupation_id_name_list
+)
 from src.entities.resident import ResidentModel
 
 
 router = APIRouter(
     prefix='/resident',
     tags=['Resident Service'],
+)
+
+utilsRouter = APIRouter(
+    prefix='/resident-utils',
+    tags=['Resident Utils Service'],
 )
 
 
@@ -74,8 +82,34 @@ async def decline_user_sign_up(user_id: str, db: Session = Depends(get_db), stat
 async def get_pending_user_signups(
     db: Session = Depends(get_db),
 ):
-    return get_pending_user_signups(db=db)
+    return get_pending_user(db=db)
+
+
+
 ######################
 ###  Family Routes ###
 ######################
+
+
+@utilsRouter.get("/family/list", response_model=dict, dependencies=[Depends(SafeRateLimiter(times=50, seconds=60))])
+async def list_families_with_name_param(
+    name: str = None,
+    db: Session = Depends(get_db)
+):
+    families = get_family_id_name_list(db=db, name=name)
+    return {"data": families}
+
+
+
+##########################
+###  Occupation Routes ###
+##########################
+
+@utilsRouter.get("/occupation/list", response_model=dict, dependencies=[Depends(SafeRateLimiter(times=50, seconds=60))])
+async def list_occupations_with_name_param(
+    name: str = None,
+    db: Session = Depends(get_db)
+):
+    occupations = get_occupation_id_name_list(db=db, name=name)
+    return {"data": occupations}
 

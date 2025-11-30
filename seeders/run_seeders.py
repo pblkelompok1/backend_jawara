@@ -5,38 +5,98 @@ import sys
 import os
 from pathlib import Path
 
-# Add src directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+# Add src directory to path if not already present
+src_path = str(Path(__file__).parent.parent / 'src')
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
 
 from user_seeder import seed_users
+from resident_seeder import seed_residents
 from refresh_session_seeder import seed_refresh_sessions
+from occupation_seeder import seed_occupations
+from rt_seeder import seed_rt
+from family_seeder import seed_families
+from home_seeder import seed_homes
+from home_history_seeder import seed_home_history
+from family_movement_seeder import seed_family_movements
 
 
 def run_all_seeders():
     """
     Menjalankan semua seeder secara berurutan
     """
+    from src.database.core import SessionLocal
+    db = SessionLocal()
+    from src.entities.resident import ResidentModel, OccupationModel
+    from src.entities.user import UserModel
+    from src.entities.family import FamilyModel, FamilyMovementModel
+    from src.entities.home import HomeModel, HomeHistoryModel
+    from src.entities.refresh_session import RefreshSessionModel
+
+    print("Step 0: Deleting all data from tables...")
+    print("-"*60)
+    db.query(HomeHistoryModel).delete()
+    db.query(HomeModel).delete()
+    db.query(FamilyMovementModel).delete()
+    db.query(FamilyModel).delete()
+    db.query(ResidentModel).delete()
+    db.query(OccupationModel).delete()
+    db.query(RefreshSessionModel).delete()
+    db.query(UserModel).delete()
+    db.commit()
+    print("All data deleted.\n")
+
     print("\n" + "="*60)
     print("RUNNING ALL SEEDERS")
     print("="*60 + "\n")
-    
     try:
-        # 1. Seed users first
-        print("Step 1: Seeding users...")
+        print("Step 1: Seeding occupations...")
+        print("-"*60)
+        seed_occupations(db)
+        print("\n")
+
+        print("Step 2: Seeding users...")
         print("-"*60)
         seed_users()
-        
         print("\n")
-        
-        # 2. Seed refresh sessions
-        print("Step 2: Seeding refresh sessions...")
+
+        print("Step 3: Seeding RTs...")
+        print("-"*60)
+        seed_rt(db)
+        print("\n")
+
+        print("Step 4: Seeding families...")
+        print("-"*60)
+        seed_families(db)
+        print("\n")
+
+        print("Step 5: Seeding residents...")
+        print("-"*60)
+        seed_residents(db)
+        print("\n")
+
+        print("Step 6: Seeding homes...")
+        print("-"*60)
+        seed_homes(db)
+        print("\n")
+
+        print("Step 7: Seeding home history...")
+        print("-"*60)
+        seed_home_history(db)
+        print("\n")
+
+        print("Step 8: Seeding family movements...")
+        print("-"*60)
+        seed_family_movements(db)
+        print("\n")
+
+        print("Step 9: Seeding refresh sessions...")
         print("-"*60)
         seed_refresh_sessions()
-        
         print("\n" + "="*60)
         print("ALL SEEDERS COMPLETED SUCCESSFULLY!")
         print("="*60 + "\n")
-        
+        db.close()
     except Exception as e:
         print(f"\n{'='*60}")
         print(f"ERROR: Seeding failed - {e}")
