@@ -1,27 +1,23 @@
 from src.database.core import get_db
 from src.entities.user import UserModel
 from sqlalchemy.orm import Session
-from src.entities.resident import OccupationModel
-from src.entities.family import FamilyModel
-from src.entities.resident import ResidentModel
-from src.entities.home import HomeModel
-from sqlalchemy.dialects.postgresql import UUID
-import uuid
+from src.entities.family import RTModel
 
 def seed_rt(db: Session):
     # Assume at least one user exists for RT head
-    user = db.query(UserModel).first()
+    user = db.query(UserModel).filter(UserModel.role == 'admin').first()
     if not user:
-        print("No user found for RT head. Seed users first.")
+        print("No admin user found for RT head. Seed users first.")
         return
-    rt = FamilyModel(
-        family_name="RT 01",
-        kk_path="storage/default/default_kk.png",
-        status="active"
-    )
-    db.add(rt)
+    
+    rts = [
+        RTModel(rt_name="RT 01", user_id=user.user_id),
+        RTModel(rt_name="RT 02", user_id=user.user_id),
+        RTModel(rt_name="RT 03", user_id=user.user_id),
+    ]
+    db.bulk_save_objects(rts)
     db.commit()
-    print("Seeded RT.")
+    print("Seeded RTs.")
 
 if __name__ == "__main__":
     db = next(get_db())

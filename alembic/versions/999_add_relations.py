@@ -23,4 +23,3 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_constraint('fk_user_resident', 'm_user', type_='foreignkey')
-    op.drop_column('m_user', 'resident_id')

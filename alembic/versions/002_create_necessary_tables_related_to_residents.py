@@ -23,9 +23,7 @@ def upgrade() -> None:
         'm_rt',
         sa.Column('rt_id', sa.Integer, primary_key=True, autoincrement=True),
         sa.Column('rt_name', sa.String(), nullable=False),
-        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-
-        sa.ForeignKeyConstraint(['user_id'], ['m_user.user_id']), # For RT head
+        sa.Column('user_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('m_user.user_id'), nullable=False),
     )
 
 
@@ -45,9 +43,7 @@ def upgrade() -> None:
         sa.Column('kk_path', sa.String(), nullable=False),
         sa.Column('status', sa.String(), nullable=False),
         sa.Column('resident_id', postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column('rt_id', sa.Integer(), nullable=False),
-
-        sa.ForeignKeyConstraint(['rt_id'], ['m_rt.rt_id']),
+        sa.Column('rt_id', sa.Integer(), sa.ForeignKey('m_rt.rt_id'), nullable=False),
     )
 
 
@@ -68,15 +64,11 @@ def upgrade() -> None:
         sa.Column('status', sa.String(), nullable=False, server_default='approved'),
         sa.Column('blood_type', sa.String(), nullable=True),
         sa.Column('profile_img_path', sa.String(), nullable=True, server_default='storage/default/default_profile.png'),
-        sa.Column('ktp_path', sa.String(), nullable=False),
+        sa.Column('ktp_path', sa.String(), nullable=True),
         sa.Column('kk_path', sa.String(), nullable=False),
         sa.Column('birth_certificate_path', sa.String(), nullable=False),
-        sa.Column('occupation_id', sa.Integer(), nullable=False),
-        sa.Column('family_id', postgresql.UUID(as_uuid=True), nullable=False),
-
-        # Removed FK constraint for user_id
-        sa.ForeignKeyConstraint(['occupation_id'], ['m_occupation.occupation_id']),
-        sa.ForeignKeyConstraint(['family_id'], ['m_family.family_id']),
+        sa.Column('occupation_id', sa.Integer(), sa.ForeignKey('m_occupation.occupation_id'), nullable=False),
+        sa.Column('family_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('m_family.family_id'), nullable=False),
     )
 
 
@@ -94,23 +86,17 @@ def upgrade() -> None:
         sa.Column('home_name', sa.String(), nullable=False),
         sa.Column('home_address', sa.String(), nullable=False),
         sa.Column('status', sa.String(), nullable=False),
-        sa.Column('family_id', postgresql.UUID(as_uuid=True), nullable=False),
-
-        sa.ForeignKeyConstraint(['family_id'], ['m_family.family_id']),
+        sa.Column('family_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('m_family.family_id'), nullable=False),
     )
 
 
     # Create r_home_history table
     op.create_table(
         't_home_history',
-        sa.Column('home_id', sa.Integer),
-        sa.Column('family_id', postgresql.UUID(as_uuid=True), nullable=False),
-
+        sa.Column('home_id', sa.Integer, sa.ForeignKey('m_home.home_id')),
+        sa.Column('family_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('m_family.family_id'), nullable=False),
         sa.Column('moved_in_date', sa.Date(), nullable=False),
         sa.Column('moved_out_date', sa.Date(), nullable=True),
-
-        sa.ForeignKeyConstraint(['home_id'], ['m_home.home_id']),
-        sa.ForeignKeyConstraint(['family_id'], ['m_family.family_id']),
     )
 
 
@@ -121,9 +107,7 @@ def upgrade() -> None:
         sa.Column('reason', sa.String(), nullable=False),
         sa.Column('old_address', sa.String(), nullable=False),
         sa.Column('new_address', sa.String(), nullable=False),
-        sa.Column('family_id', postgresql.UUID(as_uuid=True), nullable=False),
-
-        sa.ForeignKeyConstraint(['family_id'], ['m_family.family_id']),
+        sa.Column('family_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('m_family.family_id'), nullable=False),
     )
 
 

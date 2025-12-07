@@ -37,16 +37,16 @@ async def list_residents(
 
     data = [
         ResidentList(
-            name=r.nik,
+            name=r.name,
             phone=r.phone,
-            email=r.user_rel.email if r.user_rel else "",
+            email=r.user.email if r.user else "",
             date_of_birth=str(r.date_of_birth),
             gender=r.gender,
             is_deceased=r.is_deceased,
             profile_image_url=r.profile_img_path,
             family_name=r.family_rel.family_name if r.family_rel else "",
             religion=r.religion,
-            occupation=r.occupation_rel.occupation_name if r.occupation_rel else r.occupation,
+            occupation=r.occupation_rel.occupation_name if r.occupation_rel else "",
             domicile_status=r.domicile_status
         )
         for r in results

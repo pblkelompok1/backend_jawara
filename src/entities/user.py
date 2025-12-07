@@ -1,42 +1,33 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
-
-import uuid
 import enum
+import uuid
+from sqlalchemy import Column, String, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
 from src.database.core import Base
+from sqlalchemy.dialects.postgresql import UUID
 
 class UserRole(str, enum.Enum):
     admin = "admin"
-    rw = "rw"          
-    rt = "rt"     
-    secretary = "secretary"
-    treasurer = "treasurer"
     citizen = "citizen"
 
-
 class UserStatus(str, enum.Enum):
-    active = "active"
-    inactive = "inactive"
-    suspended = "suspended"
     pending = "pending"
-    declined = "declined"
-
+    approved = "approved"
+    rejected = "rejected"
 
 class UserModel(Base):
     __tablename__ = 'm_user'
 
     user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String, unique=True, nullable=False)
-    password_hash = Column(String, unique=True, nullable=False)
-    role = Column(String, nullable=False, default=UserRole.citizen.value)
-    status = Column(String, nullable=False, default=UserStatus.pending.value)
-
+    password_hash = Column(String(255), nullable=False)
+    role = Column(String, nullable=False, default='citizen')
+    status = Column(String, nullable=False, default='pending')
     resident_id = Column(UUID(as_uuid=True), ForeignKey('m_resident.resident_id'), nullable=True)
-    resident_rel = relationship('ResidentModel', back_populates='user_rel', uselist=False)
 
+    # Relationships
+    refresh_sessions = relationship('RefreshSessionModel', back_populates='user', foreign_keys='RefreshSessionModel.user_id')
+    resident = relationship('ResidentModel', foreign_keys=[resident_id], back_populates='user')
+    rt_rel = relationship('RTModel', back_populates='user_rel', uselist=False)
 
     def __repr__(self):
-        return f"<User(user_id={self.user_id}, email={self.email}, password_hash={self.password_hash}, role={self.role}, status={self.status})>"
-
-
+        return f"<User(user_id={self.user_id}, email='{self.email}', role='{self.role}', status='{self.status}')>"

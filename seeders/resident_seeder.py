@@ -20,28 +20,58 @@ def seed_residents(db):
     """
     try:
         # Get first available family and occupation
-        family = db.query(ResidentModel.family_rel.property.mapper.class_).first()
-        occupation = db.query(ResidentModel.occupation_rel.property.mapper.class_).first()
-        family_id = family.family_id if family else None
-        occupation_id = occupation.occupation_id if occupation else None
+        from src.entities.family import FamilyModel
+        from src.entities.resident import OccupationModel
+        from datetime import date
+        
+        family = db.query(FamilyModel).first()
+        occupation = db.query(OccupationModel).first()
+        
+        if not family or not occupation:
+            print("No family or occupation found. Seed families and occupations first.")
+            return
+        
+        family_id = family.family_id
+        occupation_id = occupation.occupation_id
 
         residents_data = [
             {
-                "nik": str(uuid.uuid4())[:16],
+                "nik": "1234567890123456",
                 "name": "John Doe",
                 "phone": "081234567890",
                 "place_of_birth": "Jakarta",
-                "date_of_birth": "1990-01-01",
+                "date_of_birth": date(1990, 1, 1),
                 "gender": "male",
                 "is_deceased": False,
                 "family_role": "head",
                 "religion": "Islam",
-                "domicile_status": "active",
+                "domicile_status": "resident",
+                "status": "approved",
                 "blood_type": "o",
-                "profile_img_path": "default_profile.png",
-                "ktp_path": "ktp_john.png",
-                "kk_path": "kk_john.png",
-                "birth_certificate_path": "birth_john.png",
+                "profile_img_path": "storage/default/default_profile.png",
+                "ktp_path": "storage/ktp/ktp_john.png",
+                "kk_path": "storage/kk/kk_john.png",
+                "birth_certificate_path": "storage/birth_certificate/birth_john.png",
+                "family_id": family_id,
+                "occupation_id": occupation_id
+            },
+            {
+                "nik": "1234567890123457",
+                "name": "Jane Doe",
+                "phone": "081234567891",
+                "place_of_birth": "Bandung",
+                "date_of_birth": date(1992, 5, 15),
+                "gender": "female",
+                "is_deceased": False,
+                "family_role": "wife",
+                "religion": "Islam",
+                "domicile_status": "resident",
+                "status": "approved",
+                "blood_type": "a",
+                "profile_img_path": "storage/default/default_profile.png",
+                "ktp_path": "storage/ktp/ktp_jane.png",
+                "kk_path": "storage/kk/kk_john.png",
+                "birth_certificate_path": "storage/birth_certificate/birth_jane.png",
                 "family_id": family_id,
                 "occupation_id": occupation_id
             }

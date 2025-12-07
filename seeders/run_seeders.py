@@ -4,6 +4,7 @@ Master seeder untuk menjalankan semua seeder
 import sys
 import os
 from pathlib import Path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Add src directory to path if not already present
 src_path = str(Path(__file__).parent.parent / 'src')
@@ -19,6 +20,7 @@ from family_seeder import seed_families
 from home_seeder import seed_homes
 from home_history_seeder import seed_home_history
 from family_movement_seeder import seed_family_movements
+from finance_seeder import seed_finance
 
 
 def run_all_seeders():
@@ -29,17 +31,22 @@ def run_all_seeders():
     db = SessionLocal()
     from src.entities.resident import ResidentModel, OccupationModel
     from src.entities.user import UserModel
-    from src.entities.family import FamilyModel, FamilyMovementModel
+    from src.entities.family import FamilyModel, FamilyMovementModel, RTModel
     from src.entities.home import HomeModel, HomeHistoryModel
     from src.entities.refresh_session import RefreshSessionModel
+    from src.entities.finance import FeeModel, FeeTransactionModel, FinanceTransactionModel
 
     print("Step 0: Deleting all data from tables...")
     print("-"*60)
+    db.query(FeeTransactionModel).delete()
+    db.query(FinanceTransactionModel).delete()
+    db.query(FeeModel).delete()
     db.query(HomeHistoryModel).delete()
     db.query(HomeModel).delete()
     db.query(FamilyMovementModel).delete()
-    db.query(FamilyModel).delete()
     db.query(ResidentModel).delete()
+    db.query(FamilyModel).delete()
+    db.query(RTModel).delete()
     db.query(OccupationModel).delete()
     db.query(RefreshSessionModel).delete()
     db.query(UserModel).delete()
@@ -90,7 +97,12 @@ def run_all_seeders():
         seed_family_movements(db)
         print("\n")
 
-        print("Step 9: Seeding refresh sessions...")
+        print("Step 9: Seeding finance (fees & transactions)...")
+        print("-"*60)
+        seed_finance(db)
+        print("\n")
+
+        print("Step 10: Seeding refresh sessions...")
         print("-"*60)
         seed_refresh_sessions()
         print("\n" + "="*60)

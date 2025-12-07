@@ -29,37 +29,32 @@ def seed_users():
             {
                 "email": "admin@jawara.com",
                 "password": "password123",
-                "role": UserRole.admin.value
-            },
-            {
-                "email": "rw@jawara.com",
-                "password": "password123",
-                "role": UserRole.rw.value
-            },
-            {
-                "email": "rt@jawara.com",
-                "password": "password123",
-                "role": UserRole.rt.value
-            },
-            {
-                "email": "secretary@jawara.com",
-                "password": "password123",
-                "role": UserRole.secretary.value
-            },
-            {
-                "email": "treasurer@jawara.com",
-                "password": "password123",
-                "role": UserRole.treasurer.value
+                "role": UserRole.admin.value,
+                "status": "approved"
             },
             {
                 "email": "citizen@jawara.com",
                 "password": "password123",
-                "role": UserRole.citizen.value
+                "role": UserRole.citizen.value,
+                "status": "approved"
             },
             {
                 "email": "citizen2@jawara.com",
                 "password": "password123",
-                "role": UserRole.citizen.value
+                "role": UserRole.citizen.value,
+                "status": "approved"
+            },
+            {
+                "email": "pending@jawara.com",
+                "password": "password123",
+                "role": UserRole.citizen.value,
+                "status": "pending"
+            },
+            {
+                "email": "pending2@jawara.com",
+                "password": "password123",
+                "role": UserRole.citizen.value,
+                "status": "pending"
             }
         ]
         
@@ -73,6 +68,7 @@ def seed_users():
                     email=user_data["email"],
                     password_hash=hash_password(user_data["password"]),
                     role=user_data["role"],
+                    status=user_data.get("status", "pending"),
                     resident_id=user_data.get("resident_id")
                 )
                 db.add(user)

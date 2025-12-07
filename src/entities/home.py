@@ -7,9 +7,9 @@ class HomeModel(Base):
     __tablename__ = 'm_home'
 
     home_id = Column(Integer, primary_key=True, autoincrement=True)
-    home_name = Column(String, unique=True, nullable=False)
-    home_address = Column(String, unique=True, nullable=False)
-    status = Column(String, unique=True, nullable=False)
+    home_name = Column(String, nullable=False)
+    home_address = Column(String, nullable=False)
+    status = Column(String, nullable=False)
     family_id = Column(UUID(as_uuid=True), ForeignKey('m_family.family_id'), nullable=False)
 
     family = relationship('FamilyModel', back_populates='homes_rel')

@@ -35,12 +35,11 @@ def upgrade() -> None:
     op.create_table(
     'm_refresh_session',
     sa.Column('refresh_session_id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-    sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('user_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('m_user.user_id'), nullable=False),
     sa.Column('refresh_token_hash', sa.String(), nullable=False, unique=True),
     sa.Column('expires_at', sa.DateTime(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
     sa.Column('revoked', sa.Boolean(), nullable=False, server_default='false'),
-    sa.ForeignKeyConstraint(['user_id'], ['m_user.user_id']),
 )
 
 

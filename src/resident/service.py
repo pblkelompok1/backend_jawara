@@ -37,8 +37,6 @@ def get_residents(db, filters: ResidentsFilter, last_id: str | None = None):
         query_filters.append(ResidentModel.is_deceased == filters.is_deceased)
     if filters.domicile_status:
         query_filters.append(ResidentModel.domicile_status == filters.domicile_status)
-    if filters.occupation:
-        query_filters.append(ResidentModel.occupation == filters.occupation)
 
     # Keyset pagination: ambil data dengan id > last_id
     if last_id:
@@ -46,7 +44,7 @@ def get_residents(db, filters: ResidentsFilter, last_id: str | None = None):
 
     # Query utama dengan selective eager loading
     query = db.query(ResidentModel).options(
-        joinedload(ResidentModel.user_rel),
+        joinedload(ResidentModel.user),
         joinedload(ResidentModel.family_rel),
         joinedload(ResidentModel.occupation_rel)
     )
