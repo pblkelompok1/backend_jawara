@@ -20,6 +20,13 @@ python-multipart        # file upload
 pillow
 pypdf2
 
+# AI / Machine Learning
+opencv-python         # cv2 untuk computer vision
+numpy                 # numpy untuk operasi array
+tensorflow            # atau pytorch jika menggunakan PyTorch
+scikit-learn          # machine learning utilities
+scikit-image
+
 # Background Tasks / Worker
 redis
 rq                    # atau gunakan dramatiq / celery sesuai preferensi

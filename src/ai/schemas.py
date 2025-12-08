@@ -4,7 +4,8 @@ from typing import List, Optional
 class PredictionResult(BaseModel):
     label: str
     confidence: float
-    description: Optional[str] = None  
+    description: Optional[str] = None
+    scientific_name: Optional[str] = None
     similar_images: Optional[List[str]] = []
 
 class PredictResponse(BaseModel):
