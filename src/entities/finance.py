@@ -13,6 +13,7 @@ class PaymentStatus(str, enum.Enum):
 class AutomationMode(str, enum.Enum):
     weekly = "weekly"
     monthly = "monthly"
+    off = "off"
     
 class TransactionMethod(str, enum.Enum):
     cash = "cash"
@@ -42,6 +43,7 @@ class FeeTransactionModel(Base):
 	fee_transaction_id = Column(Integer, primary_key=True, autoincrement=True)
 	transaction_date = Column(Date, nullable=True)
 	fee_id = Column(UUID(as_uuid=True), ForeignKey('m_fee.fee_id'), nullable=False)
+	amount = Column(Integer, nullable=False)
 	transaction_method = Column(String, nullable=False, default=TransactionMethod.cash.value)
 	status = Column(String, nullable=False, default=PaymentStatus.unpaid.value)
 	family_id = Column(UUID(as_uuid=True), ForeignKey('m_family.family_id'), nullable=False)

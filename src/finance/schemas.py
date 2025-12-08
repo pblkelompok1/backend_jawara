@@ -21,4 +21,24 @@ class FinanceFilter(BaseModel):
     limit: int = 10
     
     class Config:
+        orm_mode = True
+
+class FeeData(BaseModel):
+    fee_id: UUID
+    fee_name: str
+    amount: int
+    charge_date: Optional[date]
+    description: Optional[str]
+    fee_category: str
+    automation_mode: Optional[str]
+    
+    class Config:
+        orm_mode = True
+
+class FeeFilter(BaseModel):
+    name: Optional[str] = None
+    offset: int = 0
+    limit: int = 10
+    
+    class Config:
         orm_mode = True  

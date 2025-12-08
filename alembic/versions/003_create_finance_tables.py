@@ -35,6 +35,7 @@ def upgrade():
         sa.Column('fee_transaction_id', sa.Integer(), primary_key=True),
         sa.Column('transaction_date', sa.Date(), nullable=True),
         sa.Column('fee_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('m_fee.fee_id'), nullable=False),
+        sa.Column('amount', sa.Integer(), nullable=False),
         sa.Column('transaction_method', sa.String(), nullable=False),
         sa.Column('status', sa.String(), nullable=False, server_default='unpaid'),
         sa.Column('family_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('m_family.family_id'), nullable=False),

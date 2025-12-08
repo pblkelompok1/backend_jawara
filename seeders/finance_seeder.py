@@ -26,7 +26,7 @@ def seed_finance(db: Session):
                 "amount": 50000,
                 "charge_date": date(2025, 1, 1),
                 "description": "Iuran kebersihan bulanan untuk RT",
-                "fee_category": "bulanan",
+                "fee_category": "Bulanan",
                 "automation_mode": AutomationMode.monthly.value
             },
             {
@@ -34,7 +34,7 @@ def seed_finance(db: Session):
                 "amount": 75000,
                 "charge_date": date(2025, 1, 1),
                 "description": "Iuran keamanan lingkungan",
-                "fee_category": "bulanan",
+                "fee_category": "Bulanan",
                 "automation_mode": AutomationMode.monthly.value
             },
             {
@@ -42,7 +42,7 @@ def seed_finance(db: Session):
                 "amount": 30000,
                 "charge_date": date(2025, 1, 1),
                 "description": "Iuran pengangkutan sampah",
-                "fee_category": "bulanan",
+                "fee_category": "Bulanan",
                 "automation_mode": AutomationMode.monthly.value
             },
             {
@@ -50,7 +50,7 @@ def seed_finance(db: Session):
                 "amount": 20000,
                 "charge_date": date(2025, 1, 1),
                 "description": "Iuran listrik penerangan jalan",
-                "fee_category": "bulanan",
+                "fee_category": "Bulanan",
                 "automation_mode": AutomationMode.monthly.value
             },
             {
@@ -58,7 +58,7 @@ def seed_finance(db: Session):
                 "amount": 25000,
                 "charge_date": date(2025, 1, 1),
                 "description": "Iuran perawatan taman lingkungan",
-                "fee_category": "bulanan",
+                "fee_category": "Bulanan",
                 "automation_mode": AutomationMode.monthly.value
             },
             {
@@ -66,15 +66,15 @@ def seed_finance(db: Session):
                 "amount": 15000,
                 "charge_date": date(2025, 1, 15),
                 "description": "Iuran kegiatan posyandu",
-                "fee_category": "bulanan",
-                "automation_mode": AutomationMode.monthly.value
+                "fee_category": "Bulanan",
+                "automation_mode": AutomationMode.off.value
             },
             {
                 "fee_name": "Iuran Kas RT",
                 "amount": 10000,
                 "charge_date": date(2025, 1, 1),
                 "description": "Iuran kas RT bulanan",
-                "fee_category": "bulanan",
+                "fee_category": "Bulanan",
                 "automation_mode": AutomationMode.monthly.value
             },
             {
@@ -82,15 +82,15 @@ def seed_finance(db: Session):
                 "amount": 100000,
                 "charge_date": date(2025, 8, 1),
                 "description": "Iuran perayaan kemerdekaan",
-                "fee_category": "tahunan",
-                "automation_mode": AutomationMode.monthly.value
+                "fee_category": "Tahunan",
+                "automation_mode": AutomationMode.off.value
             },
             {
                 "fee_name": "Iuran Gotong Royong",
                 "amount": 50000,
                 "charge_date": date(2025, 1, 7),
                 "description": "Iuran kegiatan gotong royong mingguan",
-                "fee_category": "mingguan",
+                "fee_category": "Mingguan",
                 "automation_mode": AutomationMode.weekly.value
             },
             {
@@ -98,7 +98,7 @@ def seed_finance(db: Session):
                 "amount": 200000,
                 "charge_date": date(2025, 3, 1),
                 "description": "Iuran renovasi balai RT",
-                "fee_category": "insidental",
+                "fee_category": "Insidental",
                 "automation_mode": AutomationMode.monthly.value
             }
         ]
@@ -135,6 +135,7 @@ def seed_finance(db: Session):
             fee_transaction = FeeTransactionModel(
                 transaction_date=transaction_date,
                 fee_id=fee.fee_id,
+                amount=fee.amount,
                 transaction_method=method,
                 status=status,
                 family_id=family.family_id,
