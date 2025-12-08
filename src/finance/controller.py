@@ -5,8 +5,8 @@ from starlette import status
 from src.database.core import get_db
 from src.rate_limit import SafeRateLimiter
 from sqlalchemy.orm import Session
-from src.finance.schemas import FinanceTransactionData, FinanceFilter, FeeData, FeeFilter
-from src.finance.service import get_finance_list, get_total_balance, get_fees_list
+from src.finance.schemas import FinanceTransactionData, FinanceFilter, FeeData, FeeFilter, CreateFinanceTransactionRequest
+from src.finance.service import get_finance_list, get_total_balance, get_fees_list, create_finance_transaction
 
 
 router = APIRouter(
@@ -109,5 +109,41 @@ async def list_fees(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching fees: {str(e)}")
+
+
+@router.post("/transactions", response_model=dict, status_code=status.HTTP_201_CREATED, dependencies=[Depends(SafeRateLimiter(times=30, seconds=60))])
+async def create_finance_transaction_endpoint(
+    transaction: CreateFinanceTransactionRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Create finance transaction baru (pemasukan atau pengeluaran).
     
+    Args:
+        name: Nama transaksi
+        amount: Jumlah nominal (selalu positif)
+        category: Kategori transaksi
+        transaction_date: Tanggal transaksi (optional, default: hari ini)
+        evidence_path: Path bukti transaksi
+        is_expense: True untuk pengeluaran (amount * -1), False untuk pemasukan
+    
+    Returns:
+        detail: Success message
+        data: Created finance transaction data
+    """
+    try:
+        new_transaction = create_finance_transaction(db=db, transaction_data=transaction)
+        
+        return {
+            "detail": "Finance transaction created successfully",
+            "data": FinanceTransactionData(
+                name=new_transaction.name,
+                amount=new_transaction.amount,
+                category=new_transaction.category,
+                transaction_date=new_transaction.transaction_date,
+                evidence_path=new_transaction.evidence_path
+            )
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating finance transaction: {str(e)}")
     

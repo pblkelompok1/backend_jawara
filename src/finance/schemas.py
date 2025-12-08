@@ -1,5 +1,5 @@
 from uuid import UUID
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import String
 from typing import Optional
 from datetime import date
@@ -39,6 +39,17 @@ class FeeFilter(BaseModel):
     name: Optional[str] = None
     offset: int = 0
     limit: int = 10
+    
+    class Config:
+        orm_mode = True
+
+class CreateFinanceTransactionRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    amount: int = Field(..., gt=0)
+    category: str = Field(..., min_length=1)
+    transaction_date: Optional[date] = None
+    evidence_path: str = Field(..., min_length=1)
+    is_expense: bool = False  # True = pengeluaran (amount * -1), False = pemasukan
     
     class Config:
         orm_mode = True  

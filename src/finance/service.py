@@ -277,3 +277,33 @@ def get_fees_list(db: Session, filters, offset: int = 0, limit: int = 10):
     )
     
     return total_count, results
+
+
+def create_finance_transaction(db: Session, transaction_data):
+    """
+    Membuat finance transaction baru
+    
+    Args:
+        db: Database session
+        transaction_data: CreateFinanceTransactionRequest object
+    
+    Returns:
+        Created FinanceTransactionModel
+    """
+    # Hitung amount final (jika is_expense=True, kalikan -1)
+    final_amount = transaction_data.amount * -1 if transaction_data.is_expense else transaction_data.amount
+    
+    # Create new finance transaction
+    new_transaction = FinanceTransactionModel(
+        name=transaction_data.name,
+        amount=final_amount,
+        category=transaction_data.category,
+        transaction_date=transaction_data.transaction_date or date_type.today(),
+        evidence_path=transaction_data.evidence_path
+    )
+    
+    db.add(new_transaction)
+    db.commit()
+    db.refresh(new_transaction)
+    
+    return new_transaction
