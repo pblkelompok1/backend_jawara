@@ -170,6 +170,28 @@ def is_user_status_pending(user_id: UUID, db: Session) -> bool:
     return True
 
 
+def get_user_family_id(user_id: UUID, db: Session) -> str | None:
+    """
+    Mendapatkan family_id dari user berdasarkan resident_id.
+    
+    Args:
+        user_id: UUID user
+        db: Database session
+    
+    Returns:
+        family_id string atau None jika tidak ditemukan
+    """
+    user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+    if not user or not user.resident_id:
+        return None
+    
+    resident = db.query(ResidentModel).filter(ResidentModel.resident_id == user.resident_id).first()
+    if not resident or not resident.family_id:
+        return None
+    
+    return str(resident.family_id)
+
+
 async def create_resident_submission_service(
     resident_data: ResidentSubmissionRequest,
     ktp_file: UploadFile,

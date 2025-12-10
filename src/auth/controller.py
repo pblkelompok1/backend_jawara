@@ -6,7 +6,7 @@ from starlette import status
 from src.database.core import get_db
 from src.rate_limit import SafeRateLimiter
 from sqlalchemy.orm import Session
-from .service import check_user_resident_data, get_current_user, is_user_status_pending, login_for_access_token, create_user_in_db, refresh_access_token, revoke_refresh_token
+from .service import check_user_resident_data, get_current_user, is_user_status_pending, login_for_access_token, create_user_in_db, refresh_access_token, revoke_refresh_token, get_user_family_id
 from fastapi import File, UploadFile, Form
 from src.auth.schemas import ResidentSubmissionRequest
 from .service import create_resident_submission_service, decode_token
@@ -115,6 +115,27 @@ async def check_is_user_pending(
         return {"is_pending": is_pending}
     except Exception as e:
         raise HTTPException(status_code=401, detail="Check failed: " + str(e))
+
+
+@router.get("/family")
+async def get_user_family(
+    current_user: TokenData = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get family_id dari user yang sedang login.
+    
+    User harus memiliki resident_id yang terhubung ke resident,
+    dan resident tersebut harus memiliki family_id.
+    
+    Returns:
+        family_id: UUID keluarga user, atau null jika tidak ada
+    """
+    try:
+        family_id = get_user_family_id(user_id=current_user.user_id, db=db)
+        return {"family_id": family_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to get family: " + str(e))
 
 @router.post("/resident/submissions")
 async def create_resident_submission(

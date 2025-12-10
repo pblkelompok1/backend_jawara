@@ -30,6 +30,7 @@ class FeeModel(Base):
 	description = Column(String, nullable=True)
 	fee_category = Column(String, nullable=False)
 	automation_mode = Column(String, nullable=True, default=AutomationMode.monthly.value)
+	due_date = Column(Date, nullable=True)
 
 	transactions = relationship('FeeTransactionModel', back_populates='fee_rel')
 

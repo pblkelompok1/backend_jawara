@@ -27,6 +27,7 @@ def upgrade():
         sa.Column('description', sa.String(), nullable=True),
         sa.Column('fee_category', sa.String(), nullable=False),
         sa.Column('automation_mode', sa.String(), nullable=True, server_default='weekly'),
+        sa.Column('due_date', sa.Date(), nullable=True),
     )
 
     # Create t_fee_transaction table
