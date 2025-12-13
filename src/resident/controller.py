@@ -1,16 +1,21 @@
 from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import APIRouter, Depends, HTTPException, Request, Header
+from fastapi import APIRouter, Depends, HTTPException, Request, Header, File, UploadFile
 from starlette import status
 from src.database.core import get_db
 from src.rate_limit import SafeRateLimiter
 from sqlalchemy.orm import Session
-from src.resident.schemas import ResidentList, ResidentsFilter
+from src.resident.schemas import ResidentList, ResidentsFilter, ResidentMeUpdate
 from src.resident.service import (
     get_resident_summary, get_residents, change_user_status, get_pending_user,
     get_family_id_name_list, get_occupation_id_name_list
 )
 from src.entities.resident import ResidentModel
+from src.auth.service import get_current_user
+from src.auth.schemas import TokenData
+from src.entities.user import UserModel
+from pathlib import Path
+from uuid import uuid4
 
 
 router = APIRouter(
@@ -112,4 +117,143 @@ async def list_occupations_with_name_param(
 ):
     occupations = get_occupation_id_name_list(db=db, name=name)
     return {"data": occupations}
+
+
+
+##########################
+###  My Resident Data  ###
+##########################
+
+@router.get("/me")
+async def get_my_resident(
+    current_user: TokenData = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = db.query(UserModel).filter(UserModel.user_id == current_user.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not user.resident_id:
+        raise HTTPException(status_code=404, detail="Resident data not found")
+
+    resident = db.query(ResidentModel).filter(ResidentModel.resident_id == user.resident_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="Resident data not found")
+
+    return {
+        "resident_id": str(resident.resident_id),
+        "nik": resident.nik,
+        "name": resident.name,
+        "phone": resident.phone,
+        "place_of_birth": resident.place_of_birth,
+        "date_of_birth": str(resident.date_of_birth),
+        "gender": resident.gender,
+        "is_deceased": resident.is_deceased,
+        "family_role": resident.family_role,
+        "religion": resident.religion,
+        "domicile_status": resident.domicile_status,
+        "status": resident.status,
+        "blood_type": resident.blood_type,
+        "occupation_id": resident.occupation_id,
+        "profile_img_path": resident.profile_img_path,
+        "ktp_path": resident.ktp_path,
+        "kk_path": resident.kk_path,
+        "birth_certificate_path": resident.birth_certificate_path,
+    }
+
+@router.post("/me/profile-image")
+async def upload_my_profile_image(
+    file: UploadFile = File(...),
+    current_user: TokenData = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 1) cari user yang login
+    user = db.query(UserModel).filter(UserModel.user_id == current_user.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # 2) pastikan user punya resident_id
+    if not getattr(user, "resident_id", None):
+        raise HTTPException(status_code=404, detail="User has no resident data")
+
+    # 3) ambil resident
+    resident = db.query(ResidentModel).filter(ResidentModel.resident_id == user.resident_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="Resident not found")
+
+    # 4) validasi file (opsional tapi bagus)
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+        raise HTTPException(status_code=400, detail="File must be an image")
+
+    # 5) simpan file ke storage/profile/
+    ext = Path(file.filename).suffix or ".jpg"
+    filename = f"{uuid4()}{ext}"
+    save_dir = Path("storage/profile")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    save_path = save_dir / filename
+
+    content = await file.read()
+    with open(save_path, "wb") as f:
+        f.write(content)
+
+    # 6) update path di DB
+    resident.profile_img_path = str(save_path).replace("\\", "/")
+    db.commit()
+    db.refresh(resident)
+
+    return {
+        "detail": "Profile image updated",
+        "profile_img_path": resident.profile_img_path,
+    }
+
+
+@router.patch("/me")
+async def update_my_resident(
+    payload: ResidentMeUpdate,
+    current_user: TokenData = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = db.query(UserModel).filter(UserModel.user_id == current_user.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not user.resident_id:
+        raise HTTPException(status_code=404, detail="Resident data not found")
+
+    resident = db.query(ResidentModel).filter(ResidentModel.resident_id == user.resident_id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="Resident not found")
+
+    data = payload.model_dump(exclude_none=True)  # pydantic v2
+    # kalau pydantic v1 pakai: payload.dict(exclude_none=True)
+
+    # update hanya field yang ada di request
+    for k, v in data.items():
+        setattr(resident, k, v)
+
+    db.commit()
+    db.refresh(resident)
+
+    return {
+        "resident_id": str(resident.resident_id),
+        "nik": resident.nik,
+        "name": resident.name,
+        "phone": resident.phone,
+        "place_of_birth": resident.place_of_birth,
+        "date_of_birth": str(resident.date_of_birth),
+        "gender": resident.gender,
+        "is_deceased": resident.is_deceased,
+        "family_role": resident.family_role,
+        "religion": resident.religion,
+        "domicile_status": resident.domicile_status,
+        "status": resident.status,
+        "blood_type": resident.blood_type,
+        "occupation_id": resident.occupation_id,
+        "profile_img_path": resident.profile_img_path,
+        "ktp_path": resident.ktp_path,
+        "kk_path": resident.kk_path,
+        "birth_certificate_path": resident.birth_certificate_path,
+    }
 

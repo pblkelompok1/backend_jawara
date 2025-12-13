@@ -5,6 +5,7 @@ from src.rate_limit import init_rate_limit
 from src.exceptions import AppException, app_exception_handler
 from src.api import register_routes
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
@@ -24,5 +25,6 @@ async def startup_event():
 	redis_url = "redis://localhost:6379"
 	await init_rate_limit(redis_url)
 
+app.mount("/storage", StaticFiles(directory="storage"), name="storage")
 
 register_routes(app)
