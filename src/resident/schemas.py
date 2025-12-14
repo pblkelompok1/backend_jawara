@@ -42,3 +42,10 @@ class PendingUserSignUp(BaseModel):
 
 class PendingUserSignUpList(BaseModel):
     pending_users: list[PendingUserSignUp]
+
+
+class ResidentMeUpdate(BaseModel):
+    religion: Optional[str] = None
+    phone: Optional[str] = None
+    blood_type: Optional[str] = None
+    occupation_id: Optional[int] = None
