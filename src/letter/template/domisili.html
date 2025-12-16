@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Surat Pernyataan Domisili</title>
+    <style>
+        /* Mengatur ukuran kertas A4 */
+        @page {
+            size: A4;
+            margin: 2.5cm;
+        }
+        
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 210mm; /* Lebar A4 */
+            margin: 0 auto;
+        }
+
+        /* Header / Judul */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h2 {
+            text-decoration: underline;
+            margin: 0;
+            font-size: 14pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Isi Surat */
+        .content {
+            margin-bottom: 20px;
+        }
+
+        .intro {
+            margin-bottom: 15px;
+        }
+
+        /* Tabel untuk form isian agar rapi */
+        .form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-left: 20px; /* Indentasi sedikit */
+        }
+
+        .form-table td {
+            vertical-align: top;
+            padding: 2px 0;
+        }
+
+        .label {
+            width: 180px; /* Lebar kolom label */
+        }
+
+        .separator {
+            width: 20px;
+            text-align: center;
+        }
+
+        .value {
+            font-weight: normal;
+        }
+
+        .statement {
+            margin-top: 20px;
+            text-align: justify;
+            text-indent: 30px; /* Paragraf menjorok */
+        }
+
+        .closing {
+            margin-top: 15px;
+            text-align: justify;
+            text-indent: 30px;
+        }
+
+        /* Bagian Tanda Tangan */
+        .signature-section {
+            margin-top: 50px;
+            width: 100%;
+            page-break-inside: avoid;
+        }
+
+        .signature-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .sig-column {
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        /* Tanda tangan Pemohon (Kanan) */
+        .applicant-sig {
+            text-align: center;
+            float: right;
+            width: 40%;
+        }
+
+        /* Mengetahui (RT/RW/Lurah) */
+        .official-sig-table {
+            width: 100%;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .official-sig-table td {
+            padding-bottom: 60px; /* Ruang untuk tanda tangan manual pejabat */
+        }
+
+        .ttd-img {
+            max-width: 150px;
+            max-height: 80px;
+            display: block;
+            margin: 10px auto;
+        }
+
+        .materai-box {
+            border: 1px dashed #999;
+            width: 80px;
+            height: 50px;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #666;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- JUDUL -->
+        <div class="header">
+            <h2>SURAT PERNYATAAN DOMISILI</h2>
+        </div>
+
+        <!-- PEMBUKA -->
+        <div class="content">
+            <div class="intro">
+                Yang bertanda tangan di bawah ini:
+            </div>
+
+            <!-- FORM DATA -->
+            <table class="form-table">
+                <tr>
+                    <td class="label">Nama</td>
+                    <td class="separator">:</td>
+                    <td class="value"><strong>{{ nama }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label">Tempat/Tanggal Lahir</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ tempat_lahir }}, {{ tanggal_lahir }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Agama</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ agama }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Pekerjaan</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ pekerjaan }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Alamat KTP</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ alamat_ktp }}</td>
+                </tr>
+                <tr>
+                    <td class="label">No. KK / KTP</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ no_identitas }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Alamat Domisili</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ alamat_domisili }}</td>
+                </tr>
+            </table>
+
+            <!-- ISI PERNYATAAN -->
+            <div class="statement">
+                Dengan ini saya menyatakan bahwa sampai saat ini saya masih tinggal dan berdomisili di alamat tersebut di atas.
+            </div>
+
+            <div class="closing">
+                Demikian surat pernyataan ini saya buat dengan sesungguhnya untuk dapat dipergunakan sebagaimana mestinya.
+            </div>
+        </div>
+
+        <!-- TANDA TANGAN -->
+        <div class="signature-section">
+            
+            <!-- Tanggal & Pemohon (Posisi Kanan) -->
+            <div style="width: 100%; overflow: hidden;">
+                <div class="applicant-sig">
+                    <div>{{ kota_pembuatan }}, {{ tanggal_surat }}</div>
+                    <div>Yang Menyatakan,</div>
+                    
+                    <!-- Logika TTD Digital: Jika ada gambar (Base64/URL) tampilkan, jika tidak tampilkan kotak materai -->
+                    {% if ttd_image %}
+                        <img src="{{ ttd_image }}" alt="Tanda Tangan" class="ttd-img" />
+                        <div style="font-size: 10px; margin-top:-5px;">(Materai Rp 10.000,-)</div>
+                    {% else %}
+                        <div class="materai-box">Materai<br>Rp 10.000</div>
+                        <br>
+                    {% endif %}
+
+                    <div style="font-weight: bold; text-decoration: underline; margin-top: 5px;">{{ nama }}</div>
+                </div>
+            </div>
+
+            <br><br>
+
+            <!-- Mengetahui (RT, RW, Lurah) -->
+            <div style="text-align: center; margin-bottom: 10px;">Mengetahui :</div>
+            
+            <table class="official-sig-table">
+                <tr>
+                    <td style="width: 50%;">Ketua RT {{ no_rt }}</td>
+                    <td style="width: 50%;">Ketua RW {{ no_rw }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <!-- Lurah di Tengah Bawah -->
+                        <div>{{ jabatan_lurah }}</div>
+                        <br><br><br><br> <!-- Spasi untuk TTD Basah Lurah -->
+                        <div style="font-weight: bold; text-decoration: underline;">{{ nama_lurah }}</div>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+    </div>
+
+</body>
+</html>

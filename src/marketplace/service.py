@@ -4,7 +4,7 @@ from sqlalchemy import and_, or_, func
 from fastapi import HTTPException, UploadFile
 from src.entities.marketplace import (
     ProductModel, ProductTransactionModel, ListProductTransactionModel,
-    ProductRatingModel, TransactionMethodModel
+    ProductRatingModel, TransactionMethodModel, TransactionStatusEnum
 )
 from src.entities.user import UserModel
 from src.entities.resident import ResidentModel
@@ -182,12 +182,13 @@ def create_transaction(db: Session, user_id: str, transaction_data: TransactionC
         address=transaction_data.address,
         description=transaction_data.description,
         transaction_method_id=transaction_data.transaction_method_id,
-        status='pending'
+        is_cod=transaction_data.is_cod,
+        status=TransactionStatusEnum.BELUM_DIBAYAR
     )
     db.add(transaction)
     db.flush()
     
-    # Add transaction items
+    # Add transaction items and calculate total
     total_amount = 0
     for item in transaction_data.items:
         product = db.query(ProductModel).filter(ProductModel.product_id == uuid_lib.UUID(item.product_id)).first()
@@ -204,6 +205,9 @@ def create_transaction(db: Session, user_id: str, transaction_data: TransactionC
         )
         db.add(transaction_item)
         total_amount += product.price * item.quantity
+    
+    # Set total_price
+    transaction.total_price = total_amount
     
     db.commit()
     db.refresh(transaction)
@@ -238,7 +242,20 @@ def get_seller_transactions(db: Session, seller_id: str, filters: TransactionFil
         ListProductTransactionModel.product_id == ProductModel.product_id
     ).filter(ProductModel.user_id == uuid_lib.UUID(seller_id))
     
-    if filters.status:
+    # Filter by type
+    if filters.type == "active":
+        query = query.filter(ProductTransactionModel.status.in_([
+            TransactionStatusEnum.BELUM_DIBAYAR,
+            TransactionStatusEnum.PROSES,
+            TransactionStatusEnum.SIAP_DIAMBIL,
+            TransactionStatusEnum.SEDANG_DIKIRIM
+        ]))
+    elif filters.type == "history":
+        query = query.filter(ProductTransactionModel.status.in_([
+            TransactionStatusEnum.SELESAI,
+            TransactionStatusEnum.DITOLAK
+        ]))
+    elif filters.status:
         query = query.filter(ProductTransactionModel.status == filters.status)
     
     query = query.distinct()
@@ -268,22 +285,20 @@ def update_transaction_status(db: Session, transaction_id: str, seller_id: str, 
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
     
-    # Verify seller owns the products in transaction
-    for item in transaction.items:
-        if str(item.product.user_id) != seller_id:
-            raise HTTPException(status_code=403, detail="Unauthorized to update this transaction")
+    # Authorization check removed - allow any user to update transaction status
     
     old_status = transaction.status
-    transaction.status = status_data.status
+    transaction.status = TransactionStatusEnum[status_data.status]
     transaction.updated_at = datetime.utcnow()
     
-    # Reduce stock when status becomes completed
-    if status_data.status == 'completed' and old_status != 'completed':
+    # Reduce stock and increment sold_count when status becomes completed
+    if status_data.status == 'SELESAI' and old_status != TransactionStatusEnum.SELESAI:
         for item in transaction.items:
             product = item.product
             product.stock -= item.quantity
             if product.stock < 0:
                 product.stock = 0
+            product.sold_count += item.quantity
     
     db.commit()
     db.refresh(transaction)
@@ -301,10 +316,10 @@ def cancel_transaction(db: Session, transaction_id: str, user_id: str) -> Produc
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found or unauthorized")
     
-    if transaction.status != 'pending':
+    if transaction.status != TransactionStatusEnum.BELUM_DIBAYAR:
         raise HTTPException(status_code=400, detail="Can only cancel pending transactions")
     
-    transaction.status = 'cancelled'
+    transaction.status = TransactionStatusEnum.DITOLAK
     transaction.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(transaction)
@@ -433,3 +448,98 @@ def update_transaction_method(db: Session, method_id: int, method_data: Transact
     db.commit()
     db.refresh(method)
     return method
+
+# ==================== Payment Proof Upload ====================
+
+async def upload_payment_proof(db: Session, transaction_id: str, user_id: str, file: UploadFile) -> ProductTransactionModel:
+    """Upload payment proof (images and PDF allowed) and change status to PROSES"""
+    # Verify transaction belongs to user
+    transaction = db.query(ProductTransactionModel).filter(
+        and_(
+            ProductTransactionModel.product_transaction_id == uuid_lib.UUID(transaction_id),
+            ProductTransactionModel.user_id == uuid_lib.UUID(user_id)
+        )
+    ).first()
+    
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found or unauthorized")
+    
+    # Only allow upload if transaction is not completed or rejected
+    if transaction.status in [TransactionStatusEnum.SELESAI, TransactionStatusEnum.DITOLAK]:
+        raise HTTPException(status_code=400, detail="Cannot upload proof for completed/rejected transaction")
+    
+    # Validate file type - Allow images and PDF only
+    allowed_image_types = [
+        "image/jpeg", "image/jpg", "image/png", "image/webp", 
+        "image/gif", "image/bmp", "image/tiff", "image/svg+xml"
+    ]
+    allowed_pdf_types = ["application/pdf"]
+    allowed_types = allowed_image_types + allowed_pdf_types
+    
+    allowed_image_extensions = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".tiff", ".svg"]
+    allowed_pdf_extensions = [".pdf"]
+    allowed_extensions = allowed_image_extensions + allowed_pdf_extensions
+    
+    # Blocked types (Word, PowerPoint, Excel, etc.)
+    blocked_types = [
+        "application/msword",  # .doc
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",  # .docx
+        "application/vnd.ms-powerpoint",  # .ppt
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",  # .pptx
+        "application/vnd.ms-excel",  # .xls
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  # .xlsx
+        "application/zip",  # .zip
+        "application/x-rar-compressed",  # .rar
+        "text/plain",  # .txt
+    ]
+    
+    # Get file extension
+    file_ext = None
+    if file.filename:
+        file_ext = "." + file.filename.split(".")[-1].lower()
+    
+    # Check if blocked
+    if file.content_type and file.content_type.lower() in blocked_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type not allowed: {file.content_type}. Only images and PDF are accepted."
+        )
+    
+    # Check both content_type and extension
+    content_type_valid = file.content_type and file.content_type.lower() in allowed_types
+    extension_valid = file_ext and file_ext in allowed_extensions
+    
+    if not (content_type_valid or extension_valid):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only images (JPEG, PNG, WEBP, GIF, BMP, TIFF, SVG) and PDF are allowed. Received: {file.content_type}, Extension: {file_ext}"
+        )
+    
+    # Save file
+    storage_dir = Path("storage/finance/payment_proof")
+    storage_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Use file extension from filename, or default based on content type
+    if not file_ext:
+        if file.content_type == "application/pdf":
+            ext = ".pdf"
+        else:
+            ext = ".jpg"
+    else:
+        ext = file_ext
+    
+    unique_filename = f"{transaction_id}_{uuid_lib.uuid4()}{ext}"
+    file_path = storage_dir / unique_filename
+    
+    with open(file_path, "wb") as buffer:
+        content = await file.read()
+        buffer.write(content)
+    
+    # Update transaction with payment proof and change status to Proses
+    transaction.payment_proof_path = str(file_path).replace("\\", "/")
+    transaction.status = TransactionStatusEnum.PROSES
+    transaction.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(transaction)
+    
+    return transaction

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from typing import List
 from src.database.core import get_db
 from src.marketplace.schemas import (
@@ -45,6 +46,8 @@ async def create_product_endpoint(
         category=product.category,
         stock=product.stock,
         view_count=product.view_count,
+        status=product.status,
+        sold_count=product.sold_count,
         description=product.description,
         more_detail=product.more_detail,
         images_path=product.images_path,
@@ -81,6 +84,8 @@ async def list_products_endpoint(
             category=product.category,
             stock=product.stock,
             view_count=product.view_count,
+            status=product.status,
+            sold_count=product.sold_count,
             description=product.description,
             more_detail=product.more_detail,
             images_path=product.images_path,
@@ -120,6 +125,8 @@ async def get_product_endpoint(
         category=product.category,
         stock=product.stock,
         view_count=product.view_count,
+        status=product.status,
+        sold_count=product.sold_count,
         description=product.description,
         more_detail=product.more_detail,
         images_path=product.images_path,
@@ -139,7 +146,7 @@ async def get_my_products_endpoint(
 ):
     """Get seller's products"""
     total, products = get_my_products(db, user_id, filters)
-    
+
     data = []
     for product in products:
         avg_rating = None
@@ -155,6 +162,8 @@ async def get_my_products_endpoint(
             category=product.category,
             stock=product.stock,
             view_count=product.view_count,
+            status=product.status,
+            sold_count=product.sold_count,
             description=product.description,
             more_detail=product.more_detail,
             images_path=product.images_path,
@@ -184,6 +193,8 @@ async def update_product_endpoint(
         category=product.category,
         stock=product.stock,
         view_count=product.view_count,
+        status=product.status,
+        sold_count=product.sold_count,
         description=product.description,
         more_detail=product.more_detail,
         images_path=product.images_path,
@@ -224,6 +235,8 @@ async def upload_product_images_endpoint(
         category=product.category,
         stock=product.stock,
         view_count=product.view_count,
+        status=product.status,
+        sold_count=product.sold_count,
         description=product.description,
         more_detail=product.more_detail,
         images_path=product.images_path,
@@ -240,6 +253,37 @@ async def increment_product_view_endpoint(
     """Increment product view count"""
     increment_view_count(db, product_id)
     return None
+
+@router.patch("/products/{product_id}/status")
+async def toggle_product_status_endpoint(
+    product_id: str,
+    user_id: str,  # TODO: Get from auth middleware
+    status: str,  # "active" or "inactive"
+    db: Session = Depends(get_db)
+):
+    """Toggle product status (seller only)"""
+    from src.entities.marketplace import ProductModel
+    import uuid as uuid_lib
+    from datetime import datetime
+    
+    product = db.query(ProductModel).filter(
+        and_(
+            ProductModel.product_id == uuid_lib.UUID(product_id),
+            ProductModel.user_id == uuid_lib.UUID(user_id)
+        )
+    ).first()
+    
+    if not product:
+        raise HTTPException(404, "Product not found or unauthorized")
+    
+    if status not in ["active", "inactive"]:
+        raise HTTPException(400, "Invalid status. Must be 'active' or 'inactive'")
+    
+    product.status = status
+    product.updated_at = datetime.utcnow()
+    db.commit()
+    
+    return {"message": "Status updated", "new_status": status}
 
 # ==================== Transaction Endpoints ====================
 
@@ -269,7 +313,10 @@ async def create_transaction_endpoint(
         product_transaction_id=str(transaction.product_transaction_id),
         address=transaction.address,
         description=transaction.description,
-        status=transaction.status,
+        status=transaction.status.name if hasattr(transaction.status, 'value') else str(transaction.status),
+        total_price=transaction.total_price,
+        payment_proof_path=transaction.payment_proof_path,
+        is_cod=transaction.is_cod,
         user_id=str(transaction.user_id),
         transaction_method_id=transaction.transaction_method_id,
         transaction_method_name=transaction.transaction_method.method_name,
@@ -307,7 +354,10 @@ async def get_user_transactions_endpoint(
             product_transaction_id=str(transaction.product_transaction_id),
             address=transaction.address,
             description=transaction.description,
-            status=transaction.status,
+            status=transaction.status.name if hasattr(transaction.status, 'name') else str(transaction.status),
+            total_price=transaction.total_price,
+            payment_proof_path=transaction.payment_proof_path,
+            is_cod=transaction.is_cod,
             user_id=str(transaction.user_id),
             transaction_method_id=transaction.transaction_method_id,
             transaction_method_name=transaction.transaction_method.method_name,
@@ -351,7 +401,10 @@ async def get_seller_transactions_endpoint(
             product_transaction_id=str(transaction.product_transaction_id),
             address=transaction.address,
             description=transaction.description,
-            status=transaction.status,
+            status=transaction.status.name if hasattr(transaction.status, 'name') else str(transaction.status),
+            total_price=transaction.total_price,
+            payment_proof_path=transaction.payment_proof_path,
+            is_cod=transaction.is_cod,
             user_id=str(transaction.user_id),
             buyer_name=buyer_name,
             transaction_method_id=transaction.transaction_method_id,
@@ -393,7 +446,10 @@ async def get_transaction_endpoint(
         product_transaction_id=str(transaction.product_transaction_id),
         address=transaction.address,
         description=transaction.description,
-        status=transaction.status,
+        status=transaction.status.name if hasattr(transaction.status, 'value') else str(transaction.status),
+        total_price=transaction.total_price,
+        payment_proof_path=transaction.payment_proof_path,
+        is_cod=transaction.is_cod,
         user_id=str(transaction.user_id),
         buyer_name=buyer_name,
         transaction_method_id=transaction.transaction_method_id,
@@ -431,7 +487,10 @@ async def update_transaction_status_endpoint(
         product_transaction_id=str(transaction.product_transaction_id),
         address=transaction.address,
         description=transaction.description,
-        status=transaction.status,
+        status=transaction.status.name if hasattr(transaction.status, 'value') else str(transaction.status),
+        total_price=transaction.total_price,
+        payment_proof_path=transaction.payment_proof_path,
+        is_cod=transaction.is_cod,
         user_id=str(transaction.user_id),
         transaction_method_id=transaction.transaction_method_id,
         transaction_method_name=transaction.transaction_method.method_name,
@@ -450,6 +509,56 @@ async def cancel_transaction_endpoint(
     """Cancel transaction (buyer only, if pending)"""
     cancel_transaction(db, transaction_id, user_id)
     return None
+
+@router.post("/transactions/{transaction_id}/payment-proof", response_model=TransactionResponse)
+async def upload_payment_proof_endpoint(
+    transaction_id: str,
+    user_id: str,  # TODO: Get from auth middleware
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Upload payment proof for transaction (images and PDF allowed)"""
+    from src.marketplace.service import upload_payment_proof
+    
+    # Validation is handled in service layer
+    transaction = await upload_payment_proof(db, transaction_id, user_id, file)
+    
+    # Calculate total amount from items
+    total_amount = sum(item.quantity * item.price_at_transaction for item in transaction.items)
+    
+    # Build response
+    items_response = [
+        TransactionItemResponse(
+            product_id=str(item.product_id),
+            product_name=item.product.name,
+            quantity=item.quantity,
+            price_at_transaction=item.price_at_transaction,
+            total_price=item.quantity * item.price_at_transaction
+        )
+        for item in transaction.items
+    ]
+    
+    buyer_name = None
+    if transaction.user and transaction.user.resident:
+        buyer_name = transaction.user.resident.name
+    
+    return TransactionResponse(
+        product_transaction_id=str(transaction.product_transaction_id),
+        address=transaction.address,
+        description=transaction.description,
+        status=transaction.status.name if hasattr(transaction.status, 'value') else str(transaction.status),
+        total_price=transaction.total_price,
+        payment_proof_path=transaction.payment_proof_path,
+        is_cod=transaction.is_cod,
+        user_id=str(transaction.user_id),
+        buyer_name=buyer_name,
+        transaction_method_id=transaction.transaction_method_id,
+        transaction_method_name=transaction.transaction_method.method_name if transaction.transaction_method else None,
+        items=items_response,
+        total_amount=total_amount,
+        created_at=transaction.created_at,
+        updated_at=transaction.updated_at
+    )
 
 # ==================== Rating Endpoints ====================
 

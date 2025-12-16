@@ -28,6 +28,11 @@ class UserModel(Base):
     refresh_sessions = relationship('RefreshSessionModel', back_populates='user', foreign_keys='RefreshSessionModel.user_id')
     resident = relationship('ResidentModel', foreign_keys=[resident_id], back_populates='user')
     rt_rel = relationship('RTModel', back_populates='user_rel', uselist=False)
+    
+    # Marketplace relationships
+    products = relationship('ProductModel', back_populates='user')
+    product_transactions = relationship('ProductTransactionModel', back_populates='user')
+    product_ratings = relationship('ProductRatingModel', back_populates='user')
 
     def __repr__(self):
         return f"<User(user_id={self.user_id}, email='{self.email}', role='{self.role}', status='{self.status}')>"

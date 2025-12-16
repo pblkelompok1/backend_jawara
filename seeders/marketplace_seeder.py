@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 from src.database.core import SessionLocal
 from src.entities.marketplace import (
     ProductModel, ProductTransactionModel, ListProductTransactionModel,
-    ProductRatingModel, TransactionMethodModel, ProductCategoryEnum
+    ProductRatingModel, TransactionMethodModel, ProductCategoryEnum, TransactionStatusEnum
 )
 from src.entities.user import UserModel
 
@@ -94,6 +94,16 @@ def seed_marketplace(db):
             ]
         }
         
+        # Get available product images from storage/default/product
+        product_img_dir = Path(__file__).parent.parent / "storage" / "default" / "product"
+        available_images = []
+        if product_img_dir.exists():
+            available_images = [f"storage/default/product/{f.name}" for f in product_img_dir.iterdir() if f.is_file()]
+            print(f"✓ Found {len(available_images)} product images")
+        else:
+            print(f"⚠ Warning: {product_img_dir} not found, using placeholder")
+            available_images = ["storage/default/product/1.jpg"]
+        
         products = []
         product_count = 0
         
@@ -102,19 +112,25 @@ def seed_marketplace(db):
                 seller = random.choice(users)
                 stock = random.randint(5, 100)
                 
+                # Select 2-5 random images for this product
+                num_images = random.randint(2, min(5, len(available_images)))
+                product_images = random.sample(available_images, num_images)
+                
                 product = ProductModel(
                     name=item["name"],
                     price=item["price"],
                     category=category,
                     stock=stock,
                     view_count=random.randint(0, 500),
+                    status=random.choice(["active", "active", "active", "inactive"]),  # 75% active
+                    sold_count=random.randint(0, 50),
                     description=item["desc"],
                     more_detail={
                         "weight": f"{random.randint(100, 5000)}g",
                         "condition": "new",
                         "brand": random.choice(["Local", "Import", "Homemade", "Premium"])
                     },
-                    images_path=[f"storage/default/product_banner/product_{product_count}.jpg"],
+                    images_path=product_images,
                     user_id=seller.user_id
                 )
                 products.append(product)
@@ -147,7 +163,12 @@ def seed_marketplace(db):
             "Jl. Bougenville No. 7"
         ]
         
-        statuses = ["pending", "processing", "shipping", "completed", "cancelled"]
+        statuses = [
+            TransactionStatusEnum.BELUM_DIBAYAR,
+            TransactionStatusEnum.PROSES,
+            TransactionStatusEnum.SEDANG_DIKIRIM,
+            TransactionStatusEnum.SELESAI
+        ]
         transactions = []
         
         # Create 30 transactions
@@ -156,6 +177,7 @@ def seed_marketplace(db):
             method = random.choice(methods)
             address = random.choice(addresses)
             status = random.choice(statuses)
+            is_cod = random.choice([True, False])
             
             # Create transaction
             transaction = ProductTransactionModel(
@@ -163,7 +185,8 @@ def seed_marketplace(db):
                 address=address,
                 description=f"Pesanan #{idx+1}",
                 transaction_method_id=method.transaction_method_id,
-                status=status
+                status=status,
+                is_cod=is_cod
             )
             db.add(transaction)
             db.flush()
@@ -172,6 +195,7 @@ def seed_marketplace(db):
             num_items = random.randint(1, 4)
             selected_products = random.sample(products, min(num_items, len(products)))
             
+            total_price = 0
             for product in selected_products:
                 quantity = random.randint(1, 3)
                 transaction_item = ListProductTransactionModel(
@@ -181,10 +205,14 @@ def seed_marketplace(db):
                     price_at_transaction=product.price
                 )
                 db.add(transaction_item)
+                total_price += product.price * quantity
                 
                 # Reduce stock if completed
-                if status == "completed":
+                if status == TransactionStatusEnum.SELESAI:
                     product.stock = max(0, product.stock - quantity)
+            
+            # Set total price
+            transaction.total_price = total_price
             
             transactions.append(transaction)
             

@@ -5,10 +5,13 @@ from starlette import status
 from src.database.core import get_db
 from src.rate_limit import SafeRateLimiter
 from sqlalchemy.orm import Session
-from src.resident.schemas import ResidentList, ResidentsFilter, ResidentMeUpdate
+from src.resident.schemas import (
+    ResidentList, ResidentsFilter, ResidentMeUpdate, ResidentUpdate, 
+    FamilyListResponse, UserListFilter, UserListResponse, UserRegistrationItem
+)
 from src.resident.service import (
     get_resident_summary, get_residents, change_user_status, get_pending_user,
-    get_family_id_name_list, get_occupation_id_name_list
+    get_family_id_name_list, get_occupation_id_name_list, get_user_list
 )
 from src.entities.resident import ResidentModel
 from src.auth.service import get_current_user
@@ -42,17 +45,26 @@ async def list_residents(
 
     data = [
         ResidentList(
+            resident_id=str(r.resident_id),
+            nik=r.nik,
             name=r.name,
             phone=r.phone,
-            email=r.user.email if r.user else "",
+            place_of_birth=r.place_of_birth,
             date_of_birth=str(r.date_of_birth),
             gender=r.gender,
             is_deceased=r.is_deceased,
-            profile_image_url=r.profile_img_path,
-            family_name=r.family_rel.family_name if r.family_rel else "",
+            family_role=r.family_role,
             religion=r.religion,
-            occupation=r.occupation_rel.occupation_name if r.occupation_rel else "",
-            domicile_status=r.domicile_status
+            domicile_status=r.domicile_status,
+            status=r.status,
+            blood_type=r.blood_type,
+            profile_img_path=r.profile_img_path,
+            ktp_path=r.ktp_path,
+            kk_path=r.kk_path,
+            birth_certificate_path=r.birth_certificate_path,
+            occupation_id=r.occupation_id,
+            occupation_name=r.occupation_rel.occupation_name if r.occupation_rel else None,
+            family_id=str(r.family_id)
         )
         for r in results
     ]
@@ -88,6 +100,28 @@ async def get_pending_user_signups(
     db: Session = Depends(get_db),
 ):
     return get_pending_user(db=db)
+
+
+@router.get("/users/list", response_model=UserListResponse, dependencies=[Depends(SafeRateLimiter(times=50, seconds=60))])
+async def list_user_registrations(
+    filters: UserListFilter = Depends(),
+    db: Session = Depends(get_db)
+):
+    """Get user list with resident data for registration management"""
+    total, users = get_user_list(
+        db=db,
+        status=filters.status,
+        role=filters.role,
+        limit=filters.limit,
+        offset=filters.offset
+    )
+    
+    return UserListResponse(
+        total=total,
+        limit=filters.limit,
+        offset=filters.offset,
+        data=[UserRegistrationItem(**user) for user in users]
+    )
 
 
 
@@ -256,4 +290,110 @@ async def update_my_resident(
         "kk_path": resident.kk_path,
         "birth_certificate_path": resident.birth_certificate_path,
     }
+
+
+##################################
+### Update Resident by ID (Admin)
+##################################
+
+@router.put("/{resident_id}")
+async def update_resident_by_id_endpoint(
+    resident_id: str,
+    payload: ResidentUpdate,
+    db: Session = Depends(get_db),
+):
+    """Update resident by ID (for admin/RT)"""
+    from src.resident.service import update_resident_by_id
+    from src.resident.schemas import ResidentUpdate
+    
+    try:
+        data = payload.model_dump(exclude_none=True)
+        resident = update_resident_by_id(db, resident_id, data)
+        
+        return {
+            "resident_id": str(resident.resident_id),
+            "nik": resident.nik,
+            "name": resident.name,
+            "phone": resident.phone,
+            "place_of_birth": resident.place_of_birth,
+            "date_of_birth": str(resident.date_of_birth),
+            "gender": resident.gender,
+            "is_deceased": resident.is_deceased,
+            "family_role": resident.family_role,
+            "religion": resident.religion,
+            "domicile_status": resident.domicile_status,
+            "status": resident.status,
+            "blood_type": resident.blood_type,
+            "occupation_id": resident.occupation_id,
+            "profile_img_path": resident.profile_img_path,
+            "ktp_path": resident.ktp_path,
+            "kk_path": resident.kk_path,
+            "birth_certificate_path": resident.birth_certificate_path,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating resident: {str(e)}")
+
+
+@router.put("/{resident_id}/profile")
+async def upload_resident_profile_image(
+    resident_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """Upload profile image for specific resident (for admin/RT)"""
+    from src.resident.service import save_uploaded_file, update_resident_profile_image
+    
+    try:
+        # Validate file extension
+        ext = Path(file.filename).suffix.lower()
+        if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+            raise HTTPException(status_code=400, detail="File must be an image")
+        
+        # Save file
+        image_path = await save_uploaded_file(file, "storage/profile", resident_id)
+        
+        # Update resident record
+        resident = update_resident_profile_image(db, resident_id, image_path)
+        
+        return {
+            "detail": "Profile image updated",
+            "profile_img_path": resident.profile_img_path,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading profile image: {str(e)}")
+
+
+@router.put("/{resident_id}/ktp")
+async def upload_resident_ktp_image(
+    resident_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """Upload KTP image for specific resident (for admin/RT)"""
+    from src.resident.service import save_uploaded_file, update_resident_ktp
+    
+    try:
+        # Validate file extension
+        ext = Path(file.filename).suffix.lower()
+        if ext not in [".jpg", ".jpeg", ".png", ".webp", ".pdf"]:
+            raise HTTPException(status_code=400, detail="File must be an image or PDF")
+        
+        # Save file
+        ktp_path = await save_uploaded_file(file, "storage/ktp", resident_id)
+        
+        # Update resident record
+        resident = update_resident_ktp(db, resident_id, ktp_path)
+        
+        return {
+            "detail": "KTP image updated",
+            "ktp_path": resident.ktp_path,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading KTP image: {str(e)}")
 

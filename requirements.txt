@@ -19,6 +19,9 @@ python-multipart        # file upload
 # File Processing
 pillow
 pypdf2
+jinja2
+xhtml2pdf
+qrcode
 
 # AI / Machine Learning
 opencv-python         # cv2 untuk computer vision

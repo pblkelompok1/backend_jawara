@@ -21,6 +21,11 @@ from home_seeder import seed_homes
 from home_history_seeder import seed_home_history
 from family_movement_seeder import seed_family_movements
 from finance_seeder import seed_finance
+from activity_seeder import seed_activities
+from transaction_method_seeder import seed_transaction_methods
+from marketplace_seeder import seed_marketplace
+from report_seeder import seed_reports
+from letter_seeder import seed_letters
 
 
 def run_all_seeders():
@@ -35,12 +40,32 @@ def run_all_seeders():
     from src.entities.home import HomeModel, HomeHistoryModel
     from src.entities.refresh_session import RefreshSessionModel
     from src.entities.finance import FeeModel, FeeTransactionModel, FinanceTransactionModel
+    from src.entities.activity import ActivityModel, DashboardBannerModel
+    from src.entities.marketplace import TransactionMethodModel, ProductModel, ProductTransactionModel, ListProductTransactionModel, ProductRatingModel
+    from src.entities.report import ReportModel
+    from src.entities.letter import LetterModel, LetterTransactionModel
 
     print("Step 0: Deleting all data from tables...")
     print("-"*60)
+    # Delete letter tables
+    db.query(LetterTransactionModel).delete()
+    db.query(LetterModel).delete()
+    # Delete report tables
+    db.query(ReportModel).delete()
+    # Delete marketplace tables first (foreign keys)
+    db.query(ProductRatingModel).delete()
+    db.query(ListProductTransactionModel).delete()
+    db.query(ProductTransactionModel).delete()
+    db.query(ProductModel).delete()
+    db.query(TransactionMethodModel).delete()
+    # Delete activity tables
+    db.query(DashboardBannerModel).delete()
+    db.query(ActivityModel).delete()
+    # Delete finance tables
     db.query(FeeTransactionModel).delete()
     db.query(FinanceTransactionModel).delete()
     db.query(FeeModel).delete()
+    # Delete home and family tables
     db.query(HomeHistoryModel).delete()
     db.query(HomeModel).delete()
     db.query(FamilyMovementModel).delete()
@@ -105,6 +130,31 @@ def run_all_seeders():
         print("Step 10: Seeding refresh sessions...")
         print("-"*60)
         seed_refresh_sessions()
+        print("\n")
+
+        print("Step 11: Seeding activities...")
+        print("-"*60)
+        seed_activities()
+        print("\n")
+
+        print("Step 12: Seeding transaction methods...")
+        print("-"*60)
+        seed_transaction_methods()
+        print("\n")
+
+        print("Step 13: Seeding marketplace...")
+        print("-"*60)
+        seed_marketplace(db)
+        print("\n")
+
+        print("Step 14: Seeding reports...")
+        print("-"*60)
+        seed_reports(db)
+        print("\n")
+
+        print("Step 15: Seeding letter types...")
+        print("-"*60)
+        seed_letters(db)
         print("\n" + "="*60)
         print("ALL SEEDERS COMPLETED SUCCESSFULLY!")
         print("="*60 + "\n")
