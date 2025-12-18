@@ -123,7 +123,7 @@ Setelah aplikasi berjalan, akses:
 ### Finance (`/finance`)
 - `GET /finance` - List transaksi keuangan
 - `POST /finance` - Create transaksi baru
-- `GET /finance/reports` - Generate laporan keuangan
+- `GET /finance/reports` - Generate laporan keuangan 
 
 ### Marketplace (`/marketplace`)
 - `GET /marketplace/products` - List produk
@@ -166,7 +166,7 @@ Setelah aplikasi berjalan, akses:
 - **Caching**: Redis
 - **Logging**: Loguru
 - **Authentication**: JWT
-- **Rate Limiting**: FastAPI-Limiter
+- **Rate Limiting**: FastAPI-Limiter 
 
 ## 🔒 Security Features
 
