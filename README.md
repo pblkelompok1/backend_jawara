@@ -1,35 +1,31 @@
-# Backend Jawara
+# Backend Jawara - API Documentation
 
-Backend app for Jawara mobile TI3H Kelompok 1
+Backend aplikasi Jawara menggunakan FastAPI untuk mendukung sistem manajemen perumahan/kompleks.
 
-## 📋 Prerequisites
+## 🚀 Instalasi dan Setup
 
-Sebelum menjalankan aplikasi, pastikan sudah terinstall:
+### Prerequisites
 
-- **Python 3.8+**
-- **PostgreSQL** (database utama)
-- **Redis** (opsional, untuk rate limiting dan caching)
-
-## 🚀 Cara Menjalankan Aplikasi
+- Python 3.8+
+- PostgreSQL/MySQL (sesuai database yang digunakan)
+- Redis (opsional, untuk rate limiting)
 
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/pblkelompok1/backend_jawara.git
+git clone <repository-url>
 cd backend_jawara
 ```
 
-### 2. Setup Virtual Environment (Recommended)
+### 2. Create Virtual Environment
 
-**Windows (PowerShell):**
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-```
-
-**Linux/MacOS:**
 ```bash
 python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
+# Linux/Mac
 source venv/bin/activate
 ```
 
@@ -39,275 +35,167 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Setup Database PostgreSQL
+### 4. Setup Environment Variables
 
-**Buat database baru:**
-
-```sql
-CREATE DATABASE jawara_db;
-```
-
-Atau via command line PostgreSQL:
-```bash
-psql -U postgres
-CREATE DATABASE jawara_db;
-\q
-```
-
-### 5. Konfigurasi Environment Variables
-
-Copy file `.env-example` menjadi `.env`:
-
-```bash
-copy .env-example .env
-```
-
-Edit file `.env` dan sesuaikan dengan konfigurasi Anda:
+Buat file `.env` di root project:
 
 ```env
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/jawara_db
-SECRET_KEY=your-secret-key-here-min-32-characters
-ALGORITHM=HS256
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/jawara_db
+
+# JWT Secret
+SECRET_KEY=your-secret-key-here
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# Redis (Optional)
+REDIS_URL=redis://localhost:6379
+
+# Storage
+STORAGE_PATH=./storage
 ```
 
-**Tips untuk SECRET_KEY:**
-```bash
-# Generate random secret key (Python)
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-### 6. Setup Redis (Opsional)
-
-Redis digunakan untuk rate limiting dan caching. Jika tidak menggunakan Redis, Anda perlu memodifikasi kode.
-
-**Windows:**
-- Download Redis dari [https://github.com/microsoftarchive/redis/releases](https://github.com/microsoftarchive/redis/releases)
-- Atau gunakan Docker: `docker run -d -p 6379:6379 redis`
-
-**Linux:**
-```bash
-sudo apt-get install redis-server
-sudo systemctl start redis
-```
-
-**MacOS:**
-```bash
-brew install redis
-brew services start redis
-```
-
-**Cek Redis berjalan:**
-```bash
-redis-cli ping
-# Response: PONG
-```
-
-**Jika tidak menggunakan Redis:**
-
-Edit file `src/main.py` dan comment/hapus bagian rate limit:
-
-```python
-# @app.on_event("startup")
-# async def startup_event():
-#     redis_url = "redis://localhost:6379"
-#     await init_rate_limit(redis_url)
-```
-
-### 7. Jalankan Database Migration
-
-Buat tabel-tabel di database:
+### 5. Setup Database & Seeder
 
 ```bash
+# Jalankan migrasi database
 alembic upgrade head
+
+# Jalankan seeder untuk initial data
+python -m src.database.seeder
 ```
 
-### 8. Jalankan Seeder (Opsional)
+#### Default User Credentials
 
-Isi database dengan data dummy untuk testing:
-
-```bash
-python seeders/run_seeders.py
-```
-
-**Data default yang akan dibuat:**
+Setelah menjalankan seeder, berikut adalah akun default yang tersedia:
 
 | Email | Password | Role |
 |-------|----------|------|
-| admin@jawara.com | password123 | admin |
-| rw@jawara.com | password123 | rw |
-| rt@jawara.com | password123 | rt |
-| secretary@jawara.com | password123 | secretary |
-| treasurer@jawara.com | password123 | treasurer |
-| citizen@jawara.com | password123 | citizen |
-| citizen2@jawara.com | password123 | citizen |
+| admin@jawara.com | password123 | Admin |
+| rw@jawara.com | password123 | RW |
+| rt@jawara.com | password123 | RT |
+| secretary@jawara.com | password123 | Secretary |
+| treasurer@jawara.com | password123 | Treasurer |
+| citizen@jawara.com | password123 | Citizen |
+| citizen2@jawara.com | password123 | Citizen |
 
-### 9. Jalankan Aplikasi
-
-**Development mode:**
+### 6. Create Storage Directories
 
 ```bash
-fastapi dev src/main.py
+mkdir -p storage/profile storage/ktp
 ```
 
-Atau:
+### 7. Run Application
+
+#### Development Mode
 
 ```bash
-uvicorn src.main:app --reload
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**Production mode:**
+#### Production Mode
 
 ```bash
-uvicorn src.main:app --host 0.0.0.0 --port 8000
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
-Aplikasi akan berjalan di: **http://localhost:8000**
+### 8. Access API Documentation
 
-### 10. Akses API Documentation
+Setelah aplikasi berjalan, akses:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
-FastAPI menyediakan dokumentasi API otomatis:
+## 📝 API Endpoints Overview
 
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+### Authentication (`/auth`)
+- `POST /auth/register` - Registrasi user baru
+- `POST /auth/login` - Login user
+- `POST /auth/refresh` - Refresh access token
+- `POST /auth/logout` - Logout user
 
-## 🔧 Command Reference
+### Residents (`/residents`)
+- `GET /residents` - List semua residents
+- `GET /residents/{id}` - Detail resident
+- `POST /residents` - Create resident baru
+- `PUT /residents/{id}` - Update resident
+- `DELETE /residents/{id}` - Delete resident
 
-### Database Migration
+### Finance (`/finance`)
+- `GET /finance` - List transaksi keuangan
+- `POST /finance` - Create transaksi baru
+- `GET /finance/reports` - Generate laporan keuangan 
+
+### Marketplace (`/marketplace`)
+- `GET /marketplace/products` - List produk
+- `POST /marketplace/products` - Create produk baru
+- `GET /marketplace/banners` - List banner marketplace
+
+### Letters (`/letter`)
+- `POST /letter/request` - Request surat
+- `GET /letter/history` - Riwayat permintaan surat
+- `GET /letter/{id}` - Detail surat
+
+### AI (`/ai`)
+- `POST /ai/predict` - AI prediction endpoint
+- AI endpoints untuk fitur machine learning
+
+### Files (`/files`)
+- `GET /files/{file_path}` - Serve file (KTP, profile, dll)
+
+## ✅ To-Do List (Completed)
+
+### Backend Development - Alex
+- ✅ Memperbarui Database
+- ✅ Memperbarui Seeder
+- ✅ Memperbaiki Bug atau Logic yang keliru (CRUD)
+- ✅ Request Surat screen
+- ✅ Laporan Screen
+- ✅ Managemen Banner (dashboard + marketplace)
+- ✅ Rework Registrasi pending (sekarang kurang bagus sih)
+
+### AI/ML Development - Ninis
+- ✅ Rapikan BE
+- ✅ Rapikan UI
+
+## 🛠️ Tech Stack
+
+- **Framework**: FastAPI
+- **ORM**: SQLAlchemy
+- **Validation**: Pydantic
+- **Database**: PostgreSQL/MySQL
+- **Caching**: Redis
+- **Logging**: Loguru
+- **Authentication**: JWT
+- **Rate Limiting**: FastAPI-Limiter 
+
+## 🔒 Security Features
+
+- JWT-based authentication
+- Password hashing
+- Rate limiting untuk API endpoints
+- CORS configuration
+- Input validation dengan Pydantic
+- File path security checks
+- Exception handling yang aman
+
+## 🧪 Testing
 
 ```bash
-# Jalankan migration
-alembic upgrade head
+# Run tests
+pytest
 
-# Cek status migration
-alembic current
-
-# Rollback migration terakhir
-alembic downgrade -1
-
-# Rollback semua migration
-alembic downgrade base
-
-# Buat migration baru (auto-generate)
-alembic revision --autogenerate -m "description"
-
-# Buat migration baru (manual)
-alembic revision -m "description"
+# Run with coverage
+pytest --cov=src tests/
 ```
 
-### Seeder
+## 👥 Tim Pengembang
 
-```bash
-# Jalankan semua seeder
-python seeders/run_seeders.py
+- **Alex** - FullStack Developer
+- **Ninis** - ML/AI Developer
+- **Candra** - Frontend Developer
+- **Ekya** - FullStack Developer
 
-# Jalankan seeder spesifik
-python seeders/user_seeder.py
-python seeders/refresh_session_seeder.py
-```
+---
 
-## 📁 Struktur Project
-
-```
-backend_jawara/
-├── alembic/                    # Database migration files
-│   ├── versions/               # Migration scripts
-│   └── env.py
-├── seeders/                    # Database seeders
-│   ├── run_seeders.py
-│   ├── user_seeder.py
-│   └── refresh_session_seeder.py
-├── src/
-│   ├── auth/                   # Authentication module
-│   ├── database/               # Database configuration
-│   ├── entities/               # Database models/entities
-│   ├── finance/                # Finance module
-│   ├── marketplace/            # Marketplace module
-│   ├── population/             # Population module
-│   ├── api.py                  # API routes registration
-│   ├── exceptions.py           # Custom exceptions
-│   ├── main.py                 # Application entry point
-│   └── rate_limit.py           # Rate limiting configuration
-├── .env                        # Environment variables (create from .env-example)
-├── .env-example                # Environment variables template
-├── alembic.ini                 # Alembic configuration
-├── requirements.txt            # Python dependencies
-└── README.md                   # This file
-```
-
-## 🐛 Troubleshooting
-
-### Error: "ModuleNotFoundError"
-```bash
-# Pastikan virtual environment aktif
-# Install ulang dependencies
-pip install -r requirements.txt
-```
-
-### Error: "connection refused" (PostgreSQL)
-```bash
-# Cek PostgreSQL service berjalan
-# Windows: services.msc -> PostgreSQL
-# Linux: sudo systemctl status postgresql
-# MacOS: brew services list
-```
-
-### Error: "connection refused" (Redis)
-```bash
-# Jika tidak menggunakan Redis, comment kode rate limit di main.py
-# Atau jalankan Redis:
-# Windows: redis-server.exe
-# Linux/MacOS: redis-server
-```
-
-### Error: "Target database is not up to date"
-```bash
-alembic upgrade head
-```
-
-### Error: "Can't locate revision"
-```bash
-alembic stamp head
-```
-
-### Reset Database Completely
-```bash
-# Rollback semua migration
-alembic downgrade base
-
-# Drop dan recreate database
-# psql -U postgres
-# DROP DATABASE jawara_db;
-# CREATE DATABASE jawara_db;
-# \q
-
-# Jalankan ulang migration
-alembic upgrade head
-
-# Jalankan ulang seeder
-python seeders/run_seeders.py
-```
-
-## 📝 Notes
-
-- Untuk development, gunakan `fastapi dev` atau `uvicorn --reload`
-- Untuk production, gunakan `uvicorn` tanpa `--reload` dan set workers
-- Redis **opsional**, tapi direkomendasikan untuk production
-- Seeder bersifat **idempotent** - aman dijalankan berkali-kali
-- Jangan commit file `.env` ke repository!
-- Untuk production, gunakan password yang kuat dan secret key yang unik
-
-## 📚 Additional Resources
-
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [SQLAlchemy Documentation](https://docs.sqlalchemy.org/)
-- [Alembic Documentation](https://alembic.sqlalchemy.org/)
-- [Migration & Seeder Guide](./MIGRATION_SEEDER.md)
-
-## 👥 Contributors
-
-TI3H Kelompok 1
-
-## 📄 License
-
-[Add your license here]
+**Version**: 1.0.0  
+**Last Updated**: December 2025
