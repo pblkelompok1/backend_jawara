@@ -64,7 +64,16 @@ class TransactionCreate(BaseModel):
     items: List[TransactionItemCreate] = Field(..., min_items=1)
 
 class TransactionStatusUpdate(BaseModel):
-    status: str = Field(..., pattern="^(PROSES|SEDANG_DIKIRIM|SELESAI|DITOLAK)$")
+    """
+    Valid status values (case-sensitive, ALL CAPS):
+    - BELUM_DIBAYAR
+    - PROSES
+    - SIAP_DIAMBIL
+    - SEDANG_DIKIRIM
+    - SELESAI
+    - DITOLAK
+    """
+    status: str = Field(..., pattern="^(BELUM_DIBAYAR|PROSES|SIAP_DIAMBIL|SEDANG_DIKIRIM|SELESAI|DITOLAK)$")
 
 class TransactionFilter(BaseModel):
     status: Optional[str] = None

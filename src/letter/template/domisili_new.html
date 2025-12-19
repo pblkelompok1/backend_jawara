@@ -26,20 +26,19 @@
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #000;
-            padding-bottom: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
         }
 
         .header h1 {
-            margin: 5px 0;
+            margin: 0 0 2px 0;
             font-size: 16pt;
             font-weight: bold;
             text-transform: uppercase;
         }
 
         .header p {
-            margin: 3px 0;
+            margin: 2px 0;
             font-size: 10pt;
         }
 
@@ -114,33 +113,30 @@
             page-break-inside: avoid;
         }
 
-        .signature-right {
-            float: right;
-            text-align: center;
-            width: 250px;
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        .signature-left {
-            float: left;
+        .signature-table td {
+            width: 50%;
+            vertical-align: top;
             text-align: center;
-            width: 250px;
+            padding: 0 10px;
         }
 
-        .clear {
-            clear: both;
+        .signature-cell {
+            text-align: center;
         }
 
         .qr-code {
-            margin: 20px auto 10px auto;
+            margin: 20px auto;
+            text-align: center;
+        }
+
+        .qr-code img {
             width: 100px;
             height: 100px;
-            border: 1px dashed #ccc;
-            background: #f9f9f9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8pt;
-            color: #999;
         }
 
         .signature-name {
@@ -176,6 +172,7 @@
             <p>RT {{ rt }} / RW {{ rw }}</p>
             <p>Alamat: {{ alamat_kelurahan }}</p>
         </div>
+        <div style="border-top: 3px solid #000; margin: 15px 0 25px 0;"></div>
 
         <!-- Judul Surat -->
         <div class="doc-title">
@@ -248,26 +245,31 @@
 
         <!-- Tanda Tangan -->
         <div class="signature-section">
-            <div class="signature-right">
-                <p>{{ tempat }}, {{ tanggal_surat }}</p>
-                <p class="signature-title">Ketua RT {{ rt }}</p>
-                <div class="qr-code">
-                    <img src="{{ qr_code_url }}" alt="QR Code" style="width: 90px; height: 90px;" />
-                </div>
-                <p class="signature-name">{{ nama_rt }}</p>
-            </div>
-            <div class="clear"></div>
-
-            <div class="signature-left" style="margin-top: 50px;">
-                <p class="signature-title">Mengetahui,</p>
-                <p class="signature-title">Lurah {{ kelurahan }}</p>
-                <div class="qr-code">
-                    <img src="{{ qr_code_lurah_url }}" alt="QR Code Lurah" style="width: 90px; height: 90px;" />
-                </div>
-                <p class="signature-name">{{ nama_lurah }}</p>
-                <p class="nip">NIP. {{ nip_lurah }}</p>
-            </div>
-            <div class="clear"></div>
+            <table class="signature-table">
+                <tr>
+                    <td>
+                        <div class="signature-cell">
+                            <p class="signature-title">Mengetahui,</p>
+                            <p class="signature-title">Lurah {{ kelurahan }}</p>
+                            <div class="qr-code">
+                                <img src="{{ qr_code_lurah_url }}" alt="QR Code Lurah" style="width: 90px; height: 90px; display: block; margin: 0 auto; border: none;" />
+                            </div>
+                            <p class="signature-name">{{ nama_lurah }}</p>
+                            <p class="nip">NIP. {{ nip_lurah }}</p>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="signature-cell">
+                            <p>{{ tempat }}, {{ tanggal_surat }}</p>
+                            <p class="signature-title">Ketua RT {{ rt }}</p>
+                            <div class="qr-code">
+                                <img src="{{ qr_code_url }}" alt="QR Code" style="width: 90px; height: 90px; display: block; margin: 0 auto; border: none;" />
+                            </div>
+                            <p class="signature-name">{{ nama_rt }}</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
 
         <div class="footer-note">

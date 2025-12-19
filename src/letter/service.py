@@ -65,7 +65,7 @@ def generate_letter_pdf(letter_type: str, data: Dict[str, Any], output_path: str
     
     template_data = {
         **data,
-        "kelurahan": "Jawara",
+        "kelurahan": "JAWARA",
         "rt": "001",
         "rw": "003",
         "alamat_kelurahan": "Jl. Contoh No. 123, Kota ABC",
