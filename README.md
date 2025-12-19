@@ -142,21 +142,6 @@ Setelah aplikasi berjalan, akses:
 ### Files (`/files`)
 - `GET /files/{file_path}` - Serve file (KTP, profile, dll)
 
-## ✅ To-Do List (Completed)
-
-### Backend Development - Alex
-- ✅ Memperbarui Database
-- ✅ Memperbarui Seeder
-- ✅ Memperbaiki Bug atau Logic yang keliru (CRUD)
-- ✅ Request Surat screen
-- ✅ Laporan Screen
-- ✅ Managemen Banner (dashboard + marketplace)
-- ✅ Rework Registrasi pending (sekarang kurang bagus sih)
-
-### AI/ML Development - Ninis
-- ✅ Rapikan BE
-- ✅ Rapikan UI
-
 ## 🛠️ Tech Stack
 
 - **Framework**: FastAPI
