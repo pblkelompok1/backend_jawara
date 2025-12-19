@@ -20,6 +20,7 @@ class ProductUpdate(BaseModel):
     stock: Optional[int] = Field(None, ge=0)
     description: Optional[str] = None
     more_detail: Optional[dict] = None
+    images_path: Optional[List[str]] = None
 
 class ProductFilter(BaseModel):
     name: Optional[str] = None
@@ -34,6 +35,8 @@ class ProductResponse(BaseModel):
     category: str
     stock: int
     view_count: int
+    status: str = "active"
+    sold_count: int = 0
     description: Optional[str]
     more_detail: Optional[dict]
     images_path: Optional[List[str]]
@@ -57,13 +60,24 @@ class TransactionCreate(BaseModel):
     address: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     transaction_method_id: int
+    is_cod: bool = False
     items: List[TransactionItemCreate] = Field(..., min_items=1)
 
 class TransactionStatusUpdate(BaseModel):
-    status: str = Field(..., pattern="^(processing|shipping|completed|cancelled)$")
+    """
+    Valid status values (case-sensitive, ALL CAPS):
+    - BELUM_DIBAYAR
+    - PROSES
+    - SIAP_DIAMBIL
+    - SEDANG_DIKIRIM
+    - SELESAI
+    - DITOLAK
+    """
+    status: str = Field(..., pattern="^(BELUM_DIBAYAR|PROSES|SIAP_DIAMBIL|SEDANG_DIKIRIM|SELESAI|DITOLAK)$")
 
 class TransactionFilter(BaseModel):
     status: Optional[str] = None
+    type: Optional[str] = None  # "active" or "history"
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
 
@@ -82,6 +96,9 @@ class TransactionResponse(BaseModel):
     address: str
     description: Optional[str]
     status: str
+    total_price: int
+    payment_proof_path: Optional[str] = None
+    is_cod: bool
     user_id: str
     buyer_name: Optional[str] = None
     transaction_method_id: int

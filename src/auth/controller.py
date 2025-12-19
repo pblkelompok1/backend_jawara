@@ -26,6 +26,7 @@ async def login_user(
     data: LoginUserRequest,
     db: Session = Depends(get_db),
 ):
+    print(f"[LOGIN DEBUG] Received login request for email: {data.email}")
     try:
         token = login_for_access_token(
             form_data=OAuth2PasswordRequestForm(
@@ -33,8 +34,10 @@ async def login_user(
             ),
             db=db
         )
+        print(f"[LOGIN DEBUG] Login successful for: {data.email}")
         return token
     except Exception as e:
+        print(f"[LOGIN DEBUG] Login failed for {data.email}: {str(e)}")
         raise HTTPException(status_code=401, detail=str(e))
 
 

@@ -41,8 +41,18 @@ def hash_refresh_token(token: str) -> str:
 
 def authenticate_user(email: str, password: str, db: Session) -> UserModel | bool:
     user = db.query(UserModel).filter(UserModel.email == email).first()
-    if not user or not verify_password_hash(password, user.password_hash):
+    
+    # Debug logging
+    if not user:
+        print(f"[AUTH DEBUG] User not found: {email}")
         raise AppException("Invalid email or password", 401)
+    
+    password_valid = verify_password_hash(password, user.password_hash)
+    print(f"[AUTH DEBUG] User: {email}, Password valid: {password_valid}, Status: {user.status}")
+    
+    if not password_valid:
+        raise AppException("Invalid email or password", 401)
+    
     return user
 
 

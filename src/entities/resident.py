@@ -68,7 +68,7 @@ class ResidentModel(Base):
     # Relationships
     family_rel = relationship('FamilyModel', back_populates='residents_rel')
     occupation_rel = relationship('OccupationModel', back_populates='residents')
-    user = relationship('UserModel', back_populates='resident', foreign_keys='UserModel.resident_id')
+    user = relationship('UserModel', back_populates='resident', foreign_keys='UserModel.resident_id', uselist=False)
 
     def __repr__(self):
         return f"<Resident(resident_id={self.resident_id}, nik='{self.nik}', name='{self.name}', status='{self.status}')>"

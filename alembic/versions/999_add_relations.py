@@ -1,9 +1,9 @@
 """Add relations between tables after all base tables are created.
 
 Revision ID: 999
-Revises: 003
+Revises: 006
 Create Date: 2025-11-30 12:00:00.000000
-
+    
 """
 from alembic import op
 import sqlalchemy as sa
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '999'
-down_revision = '003'
+down_revision = '006'
 branch_labels = None
 depends_on = None
 

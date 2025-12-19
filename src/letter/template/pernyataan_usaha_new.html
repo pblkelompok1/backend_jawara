@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Surat Pernyataan Usaha</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 210mm;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+        }
+
+        .header h1 {
+            margin: 0 0 2px 0;
+            font-size: 16pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            margin: 2px 0;
+            font-size: 10pt;
+        }
+
+        .doc-title {
+            text-align: center;
+            margin: 30px 0 20px 0;
+        }
+
+        .doc-title h2 {
+            text-decoration: underline;
+            margin: 0;
+            font-size: 14pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .doc-number {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 11pt;
+        }
+
+        .content {
+            text-align: justify;
+            margin-bottom: 20px;
+        }
+
+        .intro {
+            margin-bottom: 20px;
+            text-indent: 40px;
+        }
+
+        .form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .form-table td {
+            vertical-align: top;
+            padding: 5px 0;
+        }
+
+        .label {
+            width: 200px;
+            padding-left: 40px;
+        }
+
+        .separator {
+            width: 20px;
+            text-align: center;
+        }
+
+        .value {
+            font-weight: normal;
+        }
+
+        .statement {
+            margin: 30px 0;
+            text-align: justify;
+            text-indent: 40px;
+        }
+
+        .business-details {
+            margin: 20px 0;
+            padding-left: 40px;
+        }
+
+        .business-details h3 {
+            font-size: 12pt;
+            margin-bottom: 10px;
+        }
+
+        .closing {
+            margin: 30px 0;
+            text-align: justify;
+            text-indent: 40px;
+        }
+
+        .signature-section {
+            margin-top: 50px;
+            page-break-inside: avoid;
+        }
+
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .signature-table td {
+            width: 50%;
+            vertical-align: top;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .signature-cell {
+            text-align: center;
+        }
+
+        .qr-code {
+            margin: 20px auto;
+            text-align: center;
+        }
+
+        .qr-code img {
+            width: 100px;
+            height: 100px;
+        }
+
+        .signature-name {
+            font-weight: bold;
+            text-decoration: underline;
+            margin-top: 80px;
+        }
+
+        .signature-title {
+            margin-top: 5px;
+            font-size: 11pt;
+        }
+
+        .nip {
+            font-size: 10pt;
+            margin-top: 3px;
+        }
+
+        .footer-note {
+            margin-top: 40px;
+            font-size: 10pt;
+            font-style: italic;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Kop Surat -->
+        <div class="header">
+            <h1>PEMERINTAH KELURAHAN {{ kelurahan }}</h1>
+            <p>RT {{ rt }} / RW {{ rw }}</p>
+            <p>Alamat: {{ alamat_kelurahan }}</p>
+        </div>
+        <div style="border-top: 3px solid #000; margin: 15px 0 25px 0;"></div>
+
+        <!-- Judul Surat -->
+        <div class="doc-title">
+            <h2>Surat Keterangan Usaha</h2>
+        </div>
+        <div class="doc-number">
+            Nomor: {{ nomor_surat }}
+        </div>
+
+        <!-- Isi Surat -->
+        <div class="content">
+            <p class="intro">
+                Yang bertanda tangan di bawah ini Ketua RT {{ rt }} / RW {{ rw }}, Kelurahan {{ kelurahan }}, 
+                dengan ini menerangkan bahwa:
+            </p>
+
+            <table class="form-table">
+                <tr>
+                    <td class="label">Nama Lengkap</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ nama_lengkap }}</td>
+                </tr>
+                <tr>
+                    <td class="label">NIK</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ nik }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Tempat, Tanggal Lahir</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ tempat_lahir }}, {{ tanggal_lahir }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Jenis Kelamin</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ jenis_kelamin }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Pekerjaan</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ pekerjaan }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Alamat</td>
+                    <td class="separator">:</td>
+                    <td class="value">{{ alamat_lengkap }}</td>
+                </tr>
+            </table>
+
+            <div class="business-details">
+                <h3>Memiliki usaha dengan keterangan sebagai berikut:</h3>
+                <table class="form-table" style="margin-left: 20px;">
+                    <tr>
+                        <td class="label" style="padding-left: 0;">Nama Usaha</td>
+                        <td class="separator">:</td>
+                        <td class="value">{{ nama_usaha }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label" style="padding-left: 0;">Jenis Usaha</td>
+                        <td class="separator">:</td>
+                        <td class="value">{{ jenis_usaha }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label" style="padding-left: 0;">Alamat Usaha</td>
+                        <td class="separator">:</td>
+                        <td class="value">{{ alamat_usaha }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label" style="padding-left: 0;">Mulai Usaha</td>
+                        <td class="separator">:</td>
+                        <td class="value">{{ mulai_usaha }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <p class="statement">
+                Demikian surat keterangan usaha ini kami buat dengan sebenarnya dan dapat 
+                dipergunakan untuk {{ tujuan_surat }}.
+            </p>
+
+            <p class="closing">
+                Atas perhatian dan kerjasamanya, kami ucapkan terima kasih.
+            </p>
+        </div>
+
+        <!-- Tanda Tangan -->
+        <div class="signature-section">
+            <table class="signature-table">
+                <tr>
+                    <td>
+                        <div class="signature-cell">
+                            <p>Yang Membuat Pernyataan,</p>
+                            <div class="qr-code">
+                                <img src="{{ qr_code_pemohon_url }}" alt="QR Code Pemohon" style="width: 90px; height: 90px; display: block; margin: 0 auto; border: none;" />
+                            </div>
+                            <p class="signature-name">{{ nama_lengkap }}</p>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="signature-cell">
+                            <p>{{ tempat }}, {{ tanggal_surat }}</p>
+                            <p class="signature-title">Ketua RT {{ rt }}</p>
+                            <div class="qr-code">
+                                <img src="{{ qr_code_rt_url }}" alt="QR Code RT" style="width: 90px; height: 90px; display: block; margin: 0 auto; border: none;" />
+                            </div>
+                            <p class="signature-name">{{ nama_rt }}</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="signature-cell">
+                <p class="signature-title">Mengetahui,</p>
+                <p class="signature-title">Lurah {{ kelurahan }}</p>
+                <div class="qr-code" style="margin: 20px auto;">
+                    <img src="{{ qr_code_lurah_url }}" alt="QR Code Lurah" style="width: 90px; height: 90px; display: block; margin: 0 auto; border: none;" />
+                </div>
+                <p class="signature-name">{{ nama_lurah }}</p>
+                <p class="nip">NIP. {{ nip_lurah }}</p>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            Surat ini dibuat secara elektronis dan sah tanpa tanda tangan basah
+        </div>
+    </div>
+</body>
+</html>

@@ -4,35 +4,38 @@ from sqlalchemy.orm import Session
 import uuid
 
 def seed_families(db: Session):
-    # Assume at least one RT exists
-    rt = db.query(RTModel).first()
-    if not rt:
+    # Get all RTs
+    rts = db.query(RTModel).all()
+    if not rts:
         print("No RT found. Seed RTs first.")
         return
     
-    families = [
-        FamilyModel(
-            family_name="Keluarga Budi Santoso", 
-            kk_path="storage/kk/budi_santoso.png", 
-            status="active",
-            rt_id=rt.rt_id
-        ),
-        FamilyModel(
-            family_name="Keluarga Ahmad Dahlan", 
-            kk_path="storage/kk/ahmad_dahlan.png", 
-            status="active",
-            rt_id=rt.rt_id
-        ),
-        FamilyModel(
-            family_name="Keluarga Siti Nurhaliza", 
-            kk_path="storage/kk/siti_nurhaliza.png", 
-            status="active",
-            rt_id=rt.rt_id
-        ),
+    family_names = [
+        "Keluarga Budi Santoso", "Keluarga Ahmad Dahlan", "Keluarga Siti Nurhaliza",
+        "Keluarga Joko Widodo", "Keluarga Soekarno", "Keluarga Hatta",
+        "Keluarga Kartini", "Keluarga Dewi Sartika", "Keluarga Cut Nyak Dien",
+        "Keluarga Sudirman", "Keluarga Gatot Subroto", "Keluarga Diponegoro",
+        "Keluarga Agus Salim", "Keluarga Ki Hajar Dewantara", "Keluarga Wahid Hasyim",
+        "Keluarga Tan Malaka", "Keluarga Sutomo", "Keluarga Soepomo",
+        "Keluarga Mohammad Yamin", "Keluarga Adam Malik"
     ]
+    
+    families = []
+    for i, name in enumerate(family_names):
+        # Distribute families across RTs
+        rt = rts[i % len(rts)]
+        families.append(
+            FamilyModel(
+                family_name=name, 
+                kk_path="storage/default/document/1.pdf", 
+                status="active",
+                rt_id=rt.rt_id
+            )
+        )
+    
     db.bulk_save_objects(families)
     db.commit()
-    print("Seeded families.")
+    print(f"Seeded {len(families)} families across {len(rts)} RTs.")
 
 if __name__ == "__main__":
     db = next(get_db())

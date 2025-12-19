@@ -15,6 +15,15 @@ class ProductCategoryEnum(str, enum.Enum):
     ELEKTRONIK = "Elektronik"
 
 
+class TransactionStatusEnum(enum.Enum):
+    BELUM_DIBAYAR = "BELUM_DIBAYAR"
+    PROSES = "PROSES"
+    SIAP_DIAMBIL = "SIAP_DIAMBIL"
+    SEDANG_DIKIRIM = "SEDANG_DIKIRIM"
+    SELESAI = "SELESAI"
+    DITOLAK = "DITOLAK"
+
+
 class TransactionMethodModel(Base):
     __tablename__ = 'm_transaction_method'
 
@@ -41,6 +50,8 @@ class ProductModel(Base):
     category = Column(Enum(ProductCategoryEnum), nullable=False)
     stock = Column(Integer, nullable=False, default=0)
     view_count = Column(Integer, nullable=False, default=0)
+    status = Column(String(20), nullable=False, default="active")
+    sold_count = Column(Integer, nullable=False, default=0)
     description = Column(String, nullable=True)
     more_detail = Column(JSON, nullable=True)
     images_path = Column(ARRAY(String), nullable=True)
@@ -63,7 +74,10 @@ class ProductTransactionModel(Base):
     product_transaction_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     address = Column(String(255), nullable=False)
     description = Column(String(255), nullable=True)
-    status = Column(String(50), nullable=False, default='pending')
+    status = Column(Enum(TransactionStatusEnum), nullable=False, default=TransactionStatusEnum.BELUM_DIBAYAR)
+    total_price = Column(Integer, nullable=False, default=0)
+    payment_proof_path = Column(String(500), nullable=True)
+    is_cod = Column(Boolean, nullable=False, default=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey('m_user.user_id'), nullable=False)
     transaction_method_id = Column(Integer, ForeignKey('m_transaction_method.transaction_method_id'), nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
